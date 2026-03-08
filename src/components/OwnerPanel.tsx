@@ -159,6 +159,51 @@ const OwnerPanel = () => {
     }
   };
 
+  const inviteAdmin = async () => {
+    if (!inviteEmail.trim()) return;
+    setInviteLoading(true);
+    
+    // Look up user by email
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("email", inviteEmail.trim().toLowerCase())
+      .single();
+
+    if (!profile) {
+      toast({ title: "User not found", description: "No registered user with that email.", variant: "destructive" });
+      setInviteLoading(false);
+      return;
+    }
+
+    // Check if already admin
+    const { data: existingRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", profile.id)
+      .in("role", ["admin", "owner"] as any);
+
+    if (existingRole && existingRole.length > 0) {
+      toast({ title: "Already an admin", description: `${profile.full_name} already has a role.`, variant: "destructive" });
+      setInviteLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.from("user_roles").insert({
+      user_id: profile.id,
+      role: "admin",
+    } as any);
+
+    if (error) {
+      toast({ title: "Failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Admin added!", description: `${profile.full_name} is now an admin.` });
+      setInviteEmail("");
+      fetchData();
+    }
+    setInviteLoading(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Owner Badge */}
