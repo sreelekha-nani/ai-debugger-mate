@@ -42,6 +42,7 @@ const defaultForm: CompetitionForm = {
 
 const Admin = () => {
   const navigate = useNavigate();
+  const { isOwner } = useAdmin();
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
