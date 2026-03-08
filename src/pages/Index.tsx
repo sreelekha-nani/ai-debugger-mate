@@ -91,7 +91,7 @@ const Index = () => {
           </p>
 
           <p className="text-muted-foreground max-w-2xl mx-auto mb-10 text-lg animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            Race against time to debug AI-generated Python programs. Every challenge is unique, every second counts. Prove your debugging skills in this competitive coding arena.
+            Race against time to debug Python programs. Every challenge is unique, every second counts. Prove your debugging skills in this competitive coding arena.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-scale-in" style={{ animationDelay: "0.3s" }}>
