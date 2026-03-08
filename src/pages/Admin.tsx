@@ -266,6 +266,17 @@ const Admin = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6 space-y-6 max-w-6xl">
+        {isOwner ? (
+          <Tabs defaultValue="competitions" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 max-w-md">
+              <TabsTrigger value="competitions">🏆 Competitions</TabsTrigger>
+              <TabsTrigger value="owner">👑 Owner Panel</TabsTrigger>
+            </TabsList>
+            <TabsContent value="owner">
+              <OwnerPanel />
+            </TabsContent>
+            <TabsContent value="competitions" className="space-y-6">
+        ) : null}
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {[
