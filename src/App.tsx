@@ -34,6 +34,7 @@ const App = () => (
             <Route path="/arena" element={<ProtectedRoute><Arena /></ProtectedRoute>} />
             <Route path="/practice" element={<ProtectedRoute><Practice /></ProtectedRoute>} />
             <Route path="/practice-leaderboard" element={<ProtectedRoute><PracticeLeaderboard /></ProtectedRoute>} />
+            <Route path="/global-leaderboard" element={<ProtectedRoute><GlobalLeaderboard /></ProtectedRoute>} />
             <Route path="/contest/:slug" element={<ProtectedRoute><JoinCompetition /></ProtectedRoute>} />
             <Route path="/competition/:slug" element={<ProtectedRoute><JoinCompetition /></ProtectedRoute>} />
             <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
