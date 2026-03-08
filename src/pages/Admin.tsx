@@ -250,8 +250,9 @@ const Admin = () => {
       <div className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Shield className="w-6 h-6 text-primary" />
-            <h1 className="text-lg font-bold">Admin Dashboard</h1>
+            {isOwner ? <Crown className="w-6 h-6 text-warning" /> : <Shield className="w-6 h-6 text-primary" />}
+            <h1 className="text-lg font-bold">{isOwner ? "Owner Dashboard" : "Admin Dashboard"}</h1>
+            {isOwner && <Badge className="bg-warning/20 text-warning border-warning/30 text-xs">👑 Owner</Badge>}
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => { fetchData(); checkCompetitions(); }}>
