@@ -1,20 +1,69 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trophy, ArrowLeft, Clock, Bug, Target, Crown, Medal } from "lucide-react";
+import { Trophy, ArrowLeft, Clock, Bug, Target, Crown, Medal, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { getLeaderboard, type Participant } from "@/lib/competition-store";
+import { supabase } from "@/integrations/supabase/client";
+
+interface ParticipantRow {
+  id: string;
+  name: string;
+  team: string;
+  score: number;
+  bugs_fixed: number;
+  total_bugs: number;
+  accuracy: number;
+  time_spent: number;
+  submitted: boolean;
+  disqualified: boolean;
+  competition_id: string;
+}
 
 const Leaderboard = () => {
   const navigate = useNavigate();
-  const [leaderboard, setLeaderboard] = useState<Participant[]>([]);
+  const [participants, setParticipants] = useState<ParticipantRow[]>([]);
+  const [activeCompId, setActiveCompId] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    // Get latest active or ended competition
+    const { data: comps } = await supabase
+      .from("competitions")
+      .select("id")
+      .in("status", ["active", "ended"])
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    const compId = comps?.[0]?.id;
+    setActiveCompId(compId || null);
+
+    if (compId) {
+      const { data } = await supabase
+        .from("participants")
+        .select("*")
+        .eq("competition_id", compId)
+        .eq("submitted", true)
+        .eq("disqualified", false)
+        .order("score", { ascending: false });
+      setParticipants((data as ParticipantRow[]) || []);
+    }
+  };
 
   useEffect(() => {
-    setLeaderboard(getLeaderboard());
-    const interval = setInterval(() => setLeaderboard(getLeaderboard()), 5000);
-    return () => clearInterval(interval);
+    fetchData();
+
+    // Realtime
+    const channel = supabase
+      .channel("leaderboard-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "participants" }, () => fetchData())
+      .subscribe();
+
+    const interval = setInterval(fetchData, 10000);
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}m ${s % 60}s`;
@@ -28,37 +77,41 @@ const Leaderboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Trophy className="w-7 h-7 text-warning" /> Leaderboard
-            </h1>
-            <p className="text-muted-foreground text-sm">Live competition rankings · Auto-refreshes every 5s</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold flex items-center gap-2">
+                <Trophy className="w-7 h-7 text-warning" /> Leaderboard
+              </h1>
+              <p className="text-muted-foreground text-sm">Live competition rankings · Real-time updates</p>
+            </div>
           </div>
+          <Button variant="outline" size="sm" onClick={fetchData}>
+            <RefreshCw className="w-4 h-4 mr-1" /> Refresh
+          </Button>
         </div>
 
-        {leaderboard.length === 0 ? (
+        {participants.length === 0 ? (
           <Card className="max-w-md mx-auto border-border/50">
             <CardContent className="p-12 text-center space-y-4">
               <div className="w-20 h-20 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto">
                 <Trophy className="w-10 h-10 text-muted-foreground/30" />
               </div>
               <h2 className="text-xl font-bold">No Submissions Yet</h2>
-              <p className="text-muted-foreground">Be the first to complete a debugging challenge!</p>
-              <Button onClick={() => navigate("/")} className="glow-primary">Start Challenge</Button>
+              <p className="text-muted-foreground">Waiting for participants to submit their solutions.</p>
+              <Button onClick={() => navigate("/")} className="glow-primary">Go Home</Button>
             </CardContent>
           </Card>
         ) : (
           <>
             {/* Top 3 podium */}
-            {leaderboard.length >= 3 && (
+            {participants.length >= 3 && (
               <div className="grid grid-cols-3 gap-4 mb-10 max-w-3xl mx-auto">
                 {[1, 0, 2].map((rank) => {
-                  const p = leaderboard[rank];
+                  const p = participants[rank];
                   if (!p) return null;
                   const style = podiumColors[rank];
                   return (
@@ -76,7 +129,7 @@ const Leaderboard = () => {
                         <p className={`text-3xl font-black ${style.text}`}>{p.score}</p>
                         <p className="text-xs text-muted-foreground">points</p>
                         <div className="flex justify-center gap-3 mt-3 text-xs text-muted-foreground">
-                          <span>{p.bugsFixed}/{p.totalBugs} bugs</span>
+                          <span>{p.bugs_fixed}/{p.total_bugs} bugs</span>
                           <span>{p.accuracy}%</span>
                         </div>
                       </CardContent>
@@ -107,11 +160,8 @@ const Leaderboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {leaderboard.map((p, i) => (
-                      <TableRow
-                        key={p.id}
-                        className={`border-border/30 ${i < 3 ? "bg-primary/5" : ""}`}
-                      >
+                    {participants.map((p, i) => (
+                      <TableRow key={p.id} className={`border-border/30 ${i < 3 ? "bg-primary/5" : ""}`}>
                         <TableCell className="w-12 font-bold">
                           {i < 3 ? (
                             <span className="text-lg">{podiumColors[i].icon}</span>
@@ -121,7 +171,7 @@ const Leaderboard = () => {
                         </TableCell>
                         <TableCell className="font-semibold">{p.name}</TableCell>
                         <TableCell><Badge variant="outline" className="text-xs">{p.team}</Badge></TableCell>
-                        <TableCell className="text-center font-mono">{p.bugsFixed}/{p.totalBugs}</TableCell>
+                        <TableCell className="text-center font-mono">{p.bugs_fixed}/{p.total_bugs}</TableCell>
                         <TableCell className="text-center">
                           <Badge
                             variant={p.accuracy >= 80 ? "default" : p.accuracy >= 50 ? "secondary" : "destructive"}
@@ -130,7 +180,7 @@ const Leaderboard = () => {
                             {p.accuracy}%
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-center font-mono text-sm">{formatTime(p.timeSpent)}</TableCell>
+                        <TableCell className="text-center font-mono text-sm">{formatTime(p.time_spent)}</TableCell>
                         <TableCell className="text-right font-bold text-primary text-lg">{p.score}</TableCell>
                       </TableRow>
                     ))}

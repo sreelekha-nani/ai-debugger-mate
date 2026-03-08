@@ -1,43 +1,92 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bug, Zap, Trophy, Timer, Shield, Code2, ChevronDown, BookOpen, Scale, Users, Sparkles, ArrowRight } from "lucide-react";
+import { Bug, Zap, Trophy, Timer, Shield, Code2, ChevronDown, BookOpen, Scale, Users, Sparkles, ArrowRight, Camera, Maximize, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { saveSession, generateId, type CompetitionSession } from "@/lib/competition-store";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [team, setTeam] = useState("");
-  const [difficulty, setDifficulty] = useState("medium");
   const [isJoining, setIsJoining] = useState(false);
+  const [activeComp, setActiveComp] = useState<any>(null);
+  const [scheduledComp, setScheduledComp] = useState<any>(null);
+  const [countdown, setCountdown] = useState("");
 
-  const handleJoin = () => {
+  useEffect(() => {
+    const fetchCompetitions = async () => {
+      const { data } = await supabase
+        .from("competitions")
+        .select("*")
+        .in("status", ["active", "scheduled"])
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (data && data.length > 0) {
+        if (data[0].status === "active") setActiveComp(data[0]);
+        else setScheduledComp(data[0]);
+      }
+    };
+    fetchCompetitions();
+
+    // Realtime updates
+    const channel = supabase
+      .channel("competition-status")
+      .on("postgres_changes", { event: "*", schema: "public", table: "competitions" }, () => fetchCompetitions())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // Countdown to scheduled start
+  useEffect(() => {
+    if (!scheduledComp?.scheduled_start) return;
+    const interval = setInterval(() => {
+      const diff = new Date(scheduledComp.scheduled_start).getTime() - Date.now();
+      if (diff <= 0) {
+        setCountdown("Starting...");
+        return;
+      }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setCountdown(`${h > 0 ? h + "h " : ""}${m}m ${s}s`);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [scheduledComp]);
+
+  const handleJoin = async () => {
     if (!name.trim()) {
       toast({ title: "Name required", description: "Please enter your name to join.", variant: "destructive" });
       return;
     }
+    if (!activeComp) {
+      toast({ title: "No active competition", description: "Wait for the admin to start a competition.", variant: "destructive" });
+      return;
+    }
 
     setIsJoining(true);
-    const session: CompetitionSession = {
-      participantId: generateId(),
-      participantName: name.trim(),
-      team: team.trim() || "Solo",
-      language: "python",
-      difficulty,
-      challenge: null,
-      startTime: null,
-      duration: difficulty === "easy" ? 600 : difficulty === "medium" ? 720 : 900,
-      submitted: false,
-      tabSwitchCount: 0,
-    };
-    saveSession(session);
-    navigate("/arena");
+    try {
+      const { data, error } = await supabase.from("participants").insert({
+        competition_id: activeComp.id,
+        name: name.trim(),
+        team: team.trim() || "Solo",
+      }).select().single();
+
+      if (error) throw error;
+
+      // Store participant info in sessionStorage
+      sessionStorage.setItem("participant_id", data.id);
+      sessionStorage.setItem("competition_id", activeComp.id);
+      navigate("/arena");
+    } catch (e: any) {
+      toast({ title: "Failed to join", description: e.message, variant: "destructive" });
+      setIsJoining(false);
+    }
   };
 
   const scrollToSection = (id: string) => {
@@ -62,6 +111,9 @@ const Index = () => {
             <Button variant="outline" size="sm" onClick={() => navigate("/leaderboard")}>
               <Trophy className="w-4 h-4 mr-1" /> Leaderboard
             </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
+              <Shield className="w-4 h-4 mr-1" /> Admin
+            </Button>
           </div>
         </div>
       </nav>
@@ -76,6 +128,26 @@ const Index = () => {
         </div>
 
         <div className="relative container mx-auto px-4 text-center max-w-4xl">
+          {/* Competition Status Banner */}
+          {activeComp && (
+            <div className="mb-6 p-4 rounded-xl bg-success/10 border border-success/30 animate-slide-down">
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                <span className="font-bold text-success">Competition is LIVE!</span>
+                <span className="text-muted-foreground text-sm">— {activeComp.title}</span>
+              </div>
+            </div>
+          )}
+          {scheduledComp && !activeComp && (
+            <div className="mb-6 p-4 rounded-xl bg-warning/10 border border-warning/30 animate-slide-down">
+              <div className="flex items-center justify-center gap-2">
+                <Timer className="w-4 h-4 text-warning" />
+                <span className="font-bold text-warning">Starting in: {countdown}</span>
+                <span className="text-muted-foreground text-sm">— {scheduledComp.title}</span>
+              </div>
+            </div>
+          )}
+
           <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm border-primary/30 text-primary animate-slide-down">
             <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Competitive Debugging Challenge
           </Badge>
@@ -91,23 +163,14 @@ const Index = () => {
           </p>
 
           <p className="text-muted-foreground max-w-2xl mx-auto mb-10 text-lg animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            Race against time to debug Python programs. Every challenge is unique, every second counts. Prove your debugging skills in this competitive coding arena.
+            Race against time to debug Python programs. All participants receive the same challenge. Prove your debugging skills in this competitive coding arena.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-scale-in" style={{ animationDelay: "0.3s" }}>
-            <Button
-              size="lg"
-              onClick={() => scrollToSection("join")}
-              className="h-14 px-8 text-lg font-bold glow-primary"
-            >
-              Start Competition <ArrowRight className="w-5 h-5 ml-2" />
+            <Button size="lg" onClick={() => scrollToSection("join")} className="h-14 px-8 text-lg font-bold glow-primary">
+              Join Competition <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => scrollToSection("about")}
-              className="h-14 px-8 text-lg"
-            >
+            <Button variant="outline" size="lg" onClick={() => scrollToSection("about")} className="h-14 px-8 text-lg">
               Learn More <ChevronDown className="w-5 h-5 ml-2" />
             </Button>
           </div>
@@ -115,10 +178,10 @@ const Index = () => {
           {/* Feature pills */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: "0.4s" }}>
             {[
-              { icon: Zap, label: "Unique Challenges", desc: "Fresh problems every time" },
-              { icon: Timer, label: "Timed Rounds", desc: "10-15 minute challenges" },
-              { icon: Trophy, label: "Live Leaderboard", desc: "Real-time rankings" },
-              { icon: Shield, label: "Anti-Cheat", desc: "Fair play guaranteed" },
+              { icon: Zap, label: "Same Challenge", desc: "Fair for everyone" },
+              { icon: Timer, label: "Global Timer", desc: "Synced countdown" },
+              { icon: Camera, label: "Proctored", desc: "Camera monitored" },
+              { icon: Maximize, label: "Fullscreen", desc: "Lockdown mode" },
             ].map(({ icon: Icon, label, desc }) => (
               <div key={label} className="p-4 rounded-xl bg-card/60 border border-border/50 backdrop-blur-sm hover:border-primary/30 transition-all duration-300">
                 <Icon className="w-6 h-6 text-primary mx-auto mb-2" />
@@ -146,19 +209,19 @@ const Index = () => {
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                icon: Sparkles,
-                title: "Unique Challenges",
-                desc: "Every participant receives a unique buggy program. No two challenges are the same — no memorization, just pure skill.",
+                icon: Shield,
+                title: "Proctored Environment",
+                desc: "Camera monitoring, fullscreen enforcement, and anti-cheat systems ensure a fair competition for all participants.",
               },
               {
                 icon: Code2,
                 title: "Professional Code Editor",
-                desc: "Debug in a VS Code-like editor with syntax highlighting, line numbers, and a dark theme. Feel like a real competitive coder.",
+                desc: "Debug in a VS Code-like editor with syntax highlighting, line numbers, and a dark theme.",
               },
               {
                 icon: Trophy,
                 title: "Live Competition",
-                desc: "Compete with your coding club in real-time. See live rankings, scores, and prove you're the ultimate bug buster.",
+                desc: "Compete with your coding club in real-time. All participants solve the same challenge simultaneously.",
               },
             ].map(({ icon: Icon, title, desc }) => (
               <Card key={title} className="bg-card/60 border-border/50 hover:border-primary/30 transition-all duration-300 group">
@@ -187,12 +250,12 @@ const Index = () => {
 
           <div className="grid md:grid-cols-2 gap-4">
             {[
-              { num: "01", title: "Enter Your Name", desc: "Provide your name and optionally a team name to get started." },
-              { num: "02", title: "Choose Difficulty", desc: "Select Easy (2 bugs, 10 min), Medium (3 bugs, 12 min), or Hard (5 bugs, 15 min)." },
-              { num: "03", title: "Debug the Code", desc: "Read the problem description, find the bugs in the Python code, and fix them in the editor." },
-              { num: "04", title: "Submit Before Time Runs Out", desc: "Your code auto-submits when the timer expires. Submit early for a better score!" },
-              { num: "05", title: "AI Evaluates Your Fix", desc: "Our AI analyzes your submission, checks test cases, and calculates your accuracy score." },
-              { num: "06", title: "Climb the Leaderboard", desc: "Score is based on bugs fixed, accuracy, and time taken. Top 3 earn gold, silver, and bronze!" },
+              { num: "01", title: "Enable Camera", desc: "Your webcam must be active before the competition starts. Camera is monitored throughout." },
+              { num: "02", title: "Enter Fullscreen", desc: "The competition runs in fullscreen lockdown mode. Exiting triggers a warning." },
+              { num: "03", title: "Same Challenge for All", desc: "Every participant receives the exact same debugging problem for fairness." },
+              { num: "04", title: "Debug the Code", desc: "Find and fix all bugs in the Python program using the code editor." },
+              { num: "05", title: "Submit Before Time Runs Out", desc: "Your code auto-submits when the timer expires. Submit early for a better score!" },
+              { num: "06", title: "3 Warnings = Disqualification", desc: "Tab switches, fullscreen exits, or camera disable each trigger a warning." },
             ].map(({ num, title, desc }) => (
               <div key={num} className="flex gap-4 p-5 rounded-xl bg-card/60 border border-border/50">
                 <span className="text-3xl font-black text-primary/30 shrink-0">{num}</span>
@@ -207,13 +270,15 @@ const Index = () => {
           <Card className="mt-8 border-destructive/20 bg-destructive/5">
             <CardContent className="py-5 px-6">
               <h3 className="font-bold text-destructive flex items-center gap-2 mb-2">
-                <Shield className="w-5 h-5" /> Anti-Cheating Measures
+                <Lock className="w-5 h-5" /> Anti-Cheating Measures
               </h3>
               <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                <li>External copy-paste is disabled in the editor</li>
+                <li>Webcam monitoring with random snapshot capture</li>
+                <li>Fullscreen enforcement — exiting triggers a warning</li>
                 <li>Tab switching is tracked and flagged</li>
-                <li>Every participant gets a unique AI-generated problem</li>
+                <li>External copy-paste and right-click are disabled</li>
                 <li>Timer auto-submits to prevent time manipulation</li>
+                <li>3 warnings result in automatic disqualification</li>
               </ul>
             </CardContent>
           </Card>
@@ -237,7 +302,9 @@ const Index = () => {
                 <Bug className="w-7 h-7 text-primary" />
               </div>
               <CardTitle className="text-2xl">Bug Busters Arena</CardTitle>
-              <p className="text-sm text-muted-foreground">Python Debugging Challenge</p>
+              <p className="text-sm text-muted-foreground">
+                {activeComp ? `🟢 ${activeComp.title} — ${activeComp.difficulty} difficulty` : "Waiting for competition to start..."}
+              </p>
             </CardHeader>
             <CardContent className="space-y-5 pt-4">
               <div className="space-y-2">
@@ -261,40 +328,24 @@ const Index = () => {
                 />
               </div>
 
-              <div className="space-y-3">
-                <Label>Difficulty Level</Label>
-                <RadioGroup value={difficulty} onValueChange={setDifficulty} className="grid grid-cols-3 gap-3">
-                  {[
-                    { value: "easy", label: "Easy", desc: "2 bugs · 10 min", color: "text-success", border: "border-success/30" },
-                    { value: "medium", label: "Medium", desc: "3 bugs · 12 min", color: "text-warning", border: "border-warning/30" },
-                    { value: "hard", label: "Hard", desc: "5 bugs · 15 min", color: "text-destructive", border: "border-destructive/30" },
-                  ].map((d) => (
-                    <label
-                      key={d.value}
-                      className={`flex flex-col items-center gap-1 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                        difficulty === d.value
-                          ? `${d.border} bg-primary/5 shadow-md`
-                          : "border-border hover:border-primary/30"
-                      }`}
-                    >
-                      <RadioGroupItem value={d.value} className="sr-only" />
-                      <span className={`font-bold text-lg ${d.color}`}>{d.label}</span>
-                      <span className="text-xs text-muted-foreground">{d.desc}</span>
-                    </label>
-                  ))}
-                </RadioGroup>
-              </div>
+              {!activeComp && (
+                <div className="p-4 rounded-xl bg-warning/5 border border-warning/20 text-center">
+                  <Timer className="w-6 h-6 text-warning mx-auto mb-2" />
+                  <p className="text-sm font-medium text-warning">No Active Competition</p>
+                  <p className="text-xs text-muted-foreground">Wait for the admin to start a competition.</p>
+                </div>
+              )}
 
               <Button
                 onClick={handleJoin}
-                disabled={isJoining}
+                disabled={isJoining || !activeComp}
                 className="w-full h-13 text-base font-bold glow-primary"
                 size="lg"
               >
                 {isJoining ? (
                   <>
                     <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
-                    Generating Challenge...
+                    Joining...
                   </>
                 ) : (
                   <>
@@ -314,7 +365,7 @@ const Index = () => {
             <Bug className="w-4 h-4 text-primary" />
             <span className="font-bold">Bug Busters</span>
           </div>
-          <p className="text-sm text-muted-foreground">AI-Powered Code Debugging Challenge · Built for Competitive Coders</p>
+          <p className="text-sm text-muted-foreground">Code Debugging Challenge Platform · Built for Competitive Coders</p>
         </div>
       </footer>
     </div>
