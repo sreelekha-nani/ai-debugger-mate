@@ -1,1 +1,7 @@
 project_id = "matmvoypaehsltkdeqfm"
+
+[functions.generate-buggy-code]
+verify_jwt = false
+
+[functions.evaluate-submission]
+verify_jwt = false
