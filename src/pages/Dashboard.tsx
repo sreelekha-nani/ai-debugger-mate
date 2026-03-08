@@ -52,6 +52,19 @@ const Dashboard = () => {
             avgAccuracy: Math.round(practice.reduce((a, r) => a + (Number(r.accuracy) || 0), 0) / practice.length),
           });
         }
+
+        // Fetch streak data from profile
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("current_streak, longest_streak")
+          .eq("id", user.id)
+          .single();
+        if (profileData) {
+          setStreakData({
+            current: (profileData as any).current_streak || 0,
+            longest: (profileData as any).longest_streak || 0,
+          });
+        }
       }
     };
 
