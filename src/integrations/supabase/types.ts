@@ -25,6 +25,7 @@ export type Database = {
           duration: number
           ended_at: string | null
           id: string
+          max_participants: number | null
           scheduled_end: string | null
           scheduled_start: string | null
           slug: string | null
@@ -41,6 +42,7 @@ export type Database = {
           duration?: number
           ended_at?: string | null
           id?: string
+          max_participants?: number | null
           scheduled_end?: string | null
           scheduled_start?: string | null
           slug?: string | null
@@ -57,6 +59,7 @@ export type Database = {
           duration?: number
           ended_at?: string | null
           id?: string
+          max_participants?: number | null
           scheduled_end?: string | null
           scheduled_start?: string | null
           slug?: string | null

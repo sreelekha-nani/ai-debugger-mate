@@ -1,0 +1,1 @@
+ALTER TABLE public.competitions ADD COLUMN max_participants integer DEFAULT NULL;
