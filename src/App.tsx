@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Arena from "./pages/Arena";
 import Practice from "./pages/Practice";
 import PracticeLeaderboard from "./pages/PracticeLeaderboard";
+import GlobalLeaderboard from "./pages/GlobalLeaderboard";
 import JoinCompetition from "./pages/JoinCompetition";
 import Results from "./pages/Results";
 import Admin from "./pages/Admin";
