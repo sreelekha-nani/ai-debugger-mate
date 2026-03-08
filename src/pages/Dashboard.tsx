@@ -1,22 +1,24 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bug, Trophy, Clock, Play, LogOut, User, Award, Timer, Zap, ChevronRight, Shield, Calendar, CheckCircle2 } from "lucide-react";
+import { Bug, Trophy, Clock, Play, LogOut, User, Award, Timer, Zap, ChevronRight, Calendar, CheckCircle2, Code2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [previousResults, setPreviousResults] = useState<any[]>([]);
+  const [practiceStats, setPracticeStats] = useState({ count: 0, totalScore: 0, avgAccuracy: 0 });
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch all non-ended competitions + recent ended ones
       const { data: comps } = await supabase
         .from("competitions")
         .select("*")
@@ -24,7 +26,6 @@ const Dashboard = () => {
         .limit(20);
       setCompetitions(comps || []);
 
-      // Also check auto-start/end
       try { await supabase.functions.invoke("check-competitions"); } catch {}
 
       if (user) {
@@ -36,6 +37,19 @@ const Dashboard = () => {
           .order("submitted_at", { ascending: false })
           .limit(10);
         setPreviousResults(results || []);
+
+        // Fetch practice stats
+        const { data: practice } = await supabase
+          .from("practice_submissions")
+          .select("score, accuracy")
+          .eq("user_id", user.id);
+        if (practice && practice.length > 0) {
+          setPracticeStats({
+            count: practice.length,
+            totalScore: practice.reduce((a, r) => a + (r.score || 0), 0),
+            avgAccuracy: Math.round(practice.reduce((a, r) => a + (Number(r.accuracy) || 0), 0) / practice.length),
+          });
+        }
       }
     };
 
@@ -125,13 +139,18 @@ const Dashboard = () => {
             </div>
             <span className="font-bold text-lg">Bug Busters</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => navigate("/leaderboard")}>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/practice")}>
+              <Code2 className="w-4 h-4 mr-1" /> Practice
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/practice-leaderboard")}>
               <Trophy className="w-4 h-4 mr-1" /> Leaderboard
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
-              <Shield className="w-4 h-4 mr-1" /> Admin
-            </Button>
+            {isAdmin && (
+              <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
+                <Shield className="w-4 h-4 mr-1" /> Admin
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-1" /> Sign Out
             </Button>
@@ -161,6 +180,31 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-primary/20 hover:border-primary/40 transition-all cursor-pointer group" onClick={() => navigate("/practice")}>
+            <CardContent className="pt-6 pb-5 text-center">
+              <Code2 className="w-8 h-8 text-primary mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <h3 className="font-bold">Practice Arena</h3>
+              <p className="text-xs text-muted-foreground mt-1">Solve random debugging challenges</p>
+            </CardContent>
+          </Card>
+          <Card className="border-accent/20 hover:border-accent/40 transition-all cursor-pointer group" onClick={() => navigate("/practice-leaderboard")}>
+            <CardContent className="pt-6 pb-5 text-center">
+              <Trophy className="w-8 h-8 text-accent mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <h3 className="font-bold">Practice Leaderboard</h3>
+              <p className="text-xs text-muted-foreground mt-1">See all-time practice rankings</p>
+            </CardContent>
+          </Card>
+          <Card className="border-warning/20 hover:border-warning/40 transition-all cursor-pointer group">
+            <CardContent className="pt-6 pb-5 text-center">
+              <Zap className="w-8 h-8 text-warning mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <h3 className="font-bold">Join Competition</h3>
+              <p className="text-xs text-muted-foreground mt-1">Use a competition link from admin</p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Live Competitions */}
         {activeComps.length > 0 && (
@@ -192,7 +236,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Upcoming Competitions */}
+        {/* Upcoming */}
         {scheduledComps.length > 0 && (
           <div className="space-y-3">
             <h2 className="text-lg font-bold flex items-center gap-2">
@@ -208,7 +252,6 @@ const Dashboard = () => {
                         <Badge variant="outline" className="text-xs capitalize">{comp.difficulty}</Badge>
                       </div>
                       <h3 className="font-bold">{comp.title}</h3>
-                      {comp.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{comp.description}</p>}
                       <p className="text-xs text-muted-foreground mt-1">⏱ {comp.duration / 60} min · 📅 {comp.scheduled_start ? new Date(comp.scheduled_start).toLocaleString() : "TBD"}</p>
                     </div>
                     <div className="text-right">
@@ -227,20 +270,18 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* No competitions */}
         {activeComps.length === 0 && scheduledComps.length === 0 && (
           <Card className="border-border/50">
             <CardContent className="py-12 text-center">
               <Clock className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
               <p className="font-medium text-muted-foreground">No Active or Upcoming Competitions</p>
-              <p className="text-xs text-muted-foreground mt-1">Check back later for new challenges!</p>
+              <p className="text-xs text-muted-foreground mt-1">Try the Practice Arena or check back later!</p>
             </CardContent>
           </Card>
         )}
 
-        {/* Stats & Results */}
+        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Quick Stats */}
           <Card className="border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
@@ -248,41 +289,27 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {previousResults.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-lg bg-primary/5 text-center">
-                    <p className="text-2xl font-bold text-primary">{previousResults.length}</p>
-                    <p className="text-xs text-muted-foreground">Competitions</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-success/5 text-center">
-                    <p className="text-2xl font-bold text-success">
-                      {Math.round(previousResults.reduce((a, r) => a + (Number(r.accuracy) || 0), 0) / previousResults.length)}%
-                    </p>
-                    <p className="text-xs text-muted-foreground">Avg Accuracy</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-accent/5 text-center">
-                    <p className="text-2xl font-bold text-accent">
-                      {previousResults.reduce((a, r) => a + (r.bugs_fixed || 0), 0)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Bugs Fixed</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-warning/5 text-center">
-                    <p className="text-2xl font-bold text-warning">
-                      {Math.max(...previousResults.map((r) => r.score || 0))}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Best Score</p>
-                  </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-primary/5 text-center">
+                  <p className="text-2xl font-bold text-primary">{previousResults.length}</p>
+                  <p className="text-xs text-muted-foreground">Competitions</p>
                 </div>
-              ) : (
-                <div className="text-center py-6">
-                  <Trophy className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No results yet</p>
+                <div className="p-3 rounded-lg bg-accent/5 text-center">
+                  <p className="text-2xl font-bold text-accent">{practiceStats.count}</p>
+                  <p className="text-xs text-muted-foreground">Practice Solved</p>
                 </div>
-              )}
+                <div className="p-3 rounded-lg bg-success/5 text-center">
+                  <p className="text-2xl font-bold text-success">{practiceStats.avgAccuracy || 0}%</p>
+                  <p className="text-xs text-muted-foreground">Avg Accuracy</p>
+                </div>
+                <div className="p-3 rounded-lg bg-warning/5 text-center">
+                  <p className="text-2xl font-bold text-warning">{practiceStats.totalScore}</p>
+                  <p className="text-xs text-muted-foreground">Practice Score</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Finished Competitions */}
           <Card className="border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">

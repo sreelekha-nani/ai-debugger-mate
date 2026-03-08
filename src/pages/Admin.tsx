@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Shield, Play, Square, Users, Clock, Download, RefreshCw, Trophy, Bug,
-  AlertTriangle, Eye, Pencil, Trash2, Plus, Calendar, FileText, X, ChevronDown, ChevronUp
+  AlertTriangle, Eye, Pencil, Trash2, Plus, Calendar, X, ChevronDown, ChevronUp, Link2, Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,8 +16,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const ADMIN_PASSWORD = "bugbusters2026";
-
 interface CompetitionForm {
   title: string;
   description: string;
@@ -29,7 +27,7 @@ interface CompetitionForm {
 
 const defaultForm: CompetitionForm = {
   title: "Bug Busters Challenge",
-  description: "Fix all the bugs in the given Python program within the time limit. Read the problem description carefully and use the code editor to make your corrections.",
+  description: "Fix all the bugs in the given Python program within the time limit.",
   difficulty: "medium",
   duration: 900,
   scheduledStart: "",
@@ -38,8 +36,6 @@ const defaultForm: CompetitionForm = {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [authenticated, setAuthenticated] = useState(false);
-  const [password, setPassword] = useState("");
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,15 +46,6 @@ const Admin = () => {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [expandedComp, setExpandedComp] = useState<string | null>(null);
 
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      setAuthenticated(true);
-      toast({ title: "Admin Access Granted", description: "Welcome to the admin dashboard." });
-    } else {
-      toast({ title: "Access Denied", description: "Incorrect password.", variant: "destructive" });
-    }
-  };
-
   const fetchData = useCallback(async () => {
     const [compRes, partRes] = await Promise.all([
       supabase.from("competitions").select("*").order("created_at", { ascending: false }),
@@ -68,15 +55,11 @@ const Admin = () => {
     if (partRes.data) setParticipants(partRes.data);
   }, []);
 
-  // Also poll check-competitions to auto-start/end
   const checkCompetitions = useCallback(async () => {
-    try {
-      await supabase.functions.invoke("check-competitions");
-    } catch { /* silent */ }
+    try { await supabase.functions.invoke("check-competitions"); } catch {}
   }, []);
 
   useEffect(() => {
-    if (!authenticated) return;
     fetchData();
     checkCompetitions();
     const interval = setInterval(() => { fetchData(); checkCompetitions(); }, 10000);
@@ -88,7 +71,7 @@ const Admin = () => {
       .subscribe();
 
     return () => { clearInterval(interval); supabase.removeChannel(channel); };
-  }, [authenticated, fetchData, checkCompetitions]);
+  }, [fetchData, checkCompetitions]);
 
   const updateForm = (field: keyof CompetitionForm, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -107,7 +90,7 @@ const Admin = () => {
       if (genError) throw genError;
       if (challenge.error) throw new Error(challenge.error);
 
-      const { error } = await supabase.from("competitions").insert({
+      const { data: comp, error } = await supabase.from("competitions").insert({
         title: form.title.trim(),
         description: form.description.trim(),
         difficulty: form.difficulty,
@@ -116,9 +99,14 @@ const Admin = () => {
         status: "scheduled",
         scheduled_start: form.scheduledStart || null,
         scheduled_end: form.scheduledEnd || null,
-      });
+      }).select().single();
       if (error) throw error;
-      toast({ title: "Competition Created", description: "Challenge generated successfully." });
+
+      const compUrl = `${window.location.origin}/competition/${comp.slug}`;
+      toast({
+        title: "Competition Created!",
+        description: `Share link: ${compUrl}`,
+      });
       setForm({ ...defaultForm });
       fetchData();
     } catch (e: any) {
@@ -126,6 +114,12 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyLink = (slug: string) => {
+    const url = `${window.location.origin}/competition/${slug}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: "Link Copied!", description: url });
   };
 
   const openEditDialog = (comp: any) => {
@@ -171,33 +165,25 @@ const Admin = () => {
   const deleteCompetition = async () => {
     if (!deleteTargetId) return;
     const { error } = await supabase.from("competitions").delete().eq("id", deleteTargetId);
-    if (error) {
-      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Competition Deleted" });
-      fetchData();
-    }
+    if (error) toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+    else { toast({ title: "Competition Deleted" }); fetchData(); }
     setDeleteDialogOpen(false);
     setDeleteTargetId(null);
   };
 
   const startCompetition = async (id: string) => {
-    const { error } = await supabase
-      .from("competitions")
-      .update({ status: "active", actual_start: new Date().toISOString() })
-      .eq("id", id);
+    const { error } = await supabase.from("competitions")
+      .update({ status: "active", actual_start: new Date().toISOString() }).eq("id", id);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else toast({ title: "Competition Started!", description: "All participants can now begin." });
+    else toast({ title: "Competition Started!" });
     fetchData();
   };
 
   const endCompetition = async (id: string) => {
-    const { error } = await supabase
-      .from("competitions")
-      .update({ status: "ended", ended_at: new Date().toISOString() })
-      .eq("id", id);
+    const { error } = await supabase.from("competitions")
+      .update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", id);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else toast({ title: "Competition Ended", description: "Results are now final." });
+    else toast({ title: "Competition Ended" });
     fetchData();
   };
 
@@ -205,14 +191,12 @@ const Admin = () => {
     const compParticipants = participants
       .filter((p) => p.competition_id === competitionId)
       .sort((a, b) => (b.score || 0) - (a.score || 0));
-
     const csv = [
       "Rank,Name,Team,Score,Bugs Fixed,Total Bugs,Accuracy,Time Spent (s),Warnings,Disqualified,Submitted At",
       ...compParticipants.map((p, i) =>
         `${i + 1},"${p.name}","${p.team}",${p.score},${p.bugs_fixed},${p.total_bugs},${p.accuracy}%,${p.time_spent},${p.warnings},${p.disqualified},${p.submitted_at || "N/A"}`
       ),
     ].join("\n");
-
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -222,45 +206,7 @@ const Admin = () => {
     URL.revokeObjectURL(url);
   };
 
-  const formatDateTime = (iso: string | null) => {
-    if (!iso) return "—";
-    return new Date(iso).toLocaleString();
-  };
-
-  if (!authenticated) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-sm w-full border-primary/20">
-          <CardContent className="p-8 space-y-6">
-            <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 glow-primary">
-                <Shield className="w-7 h-7 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold">Admin Dashboard</h2>
-              <p className="text-sm text-muted-foreground mt-1">Enter admin password to continue</p>
-            </div>
-            <div className="space-y-2">
-              <Label>Password</Label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                placeholder="Enter admin password"
-                className="h-12"
-              />
-            </div>
-            <Button onClick={handleLogin} className="w-full h-12 font-bold glow-primary">
-              Access Dashboard
-            </Button>
-            <Button variant="ghost" size="sm" className="w-full" onClick={() => navigate("/dashboard")}>
-              Back to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const formatDateTime = (iso: string | null) => iso ? new Date(iso).toLocaleString() : "—";
 
   return (
     <div className="min-h-screen bg-background">
@@ -331,18 +277,10 @@ const Admin = () => {
                 </Select>
               </div>
             </div>
-
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Description</Label>
-              <Textarea
-                value={form.description}
-                onChange={(e) => updateForm("description", e.target.value)}
-                placeholder="Describe the competition rules and objectives..."
-                rows={2}
-                className="resize-none"
-              />
+              <Textarea value={form.description} onChange={(e) => updateForm("description", e.target.value)} rows={2} className="resize-none" />
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">Duration (minutes)</Label>
@@ -357,7 +295,6 @@ const Admin = () => {
                 <Input type="datetime-local" value={form.scheduledEnd} onChange={(e) => updateForm("scheduledEnd", e.target.value)} className="h-10" />
               </div>
             </div>
-
             <div className="flex items-center gap-3 pt-2">
               <Button onClick={createCompetition} disabled={loading} className="glow-primary">
                 {loading ? (
@@ -366,13 +303,11 @@ const Admin = () => {
                     Generating Challenge...
                   </>
                 ) : (
-                  <>
-                    <Plus className="w-4 h-4 mr-1" /> Create Competition
-                  </>
+                  <><Plus className="w-4 h-4 mr-1" /> Create Competition</>
                 )}
               </Button>
               <p className="text-xs text-muted-foreground">
-                {form.scheduledStart ? `Auto-starts at ${new Date(form.scheduledStart).toLocaleString()}` : "Will need manual start"}
+                A unique competition link will be generated automatically.
               </p>
             </div>
           </CardContent>
@@ -389,7 +324,7 @@ const Admin = () => {
             {competitions.length === 0 ? (
               <div className="text-center py-12">
                 <Bug className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground">No competitions yet. Create one above.</p>
+                <p className="text-muted-foreground">No competitions yet.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -401,7 +336,6 @@ const Admin = () => {
 
                   return (
                     <div key={comp.id} className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
-                      {/* Competition header */}
                       <div className="p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
@@ -409,9 +343,7 @@ const Admin = () => {
                               <h3 className="font-bold text-base truncate">{comp.title}</h3>
                               <Badge
                                 variant={comp.status === "active" ? "default" : comp.status === "ended" ? "secondary" : "outline"}
-                                className={`text-xs shrink-0 ${
-                                  comp.status === "active" ? "bg-success text-success-foreground" : ""
-                                }`}
+                                className={`text-xs shrink-0 ${comp.status === "active" ? "bg-success text-success-foreground" : ""}`}
                               >
                                 {comp.status === "active" && "🟢 "}
                                 {comp.status === "scheduled" && "⏳ "}
@@ -419,9 +351,7 @@ const Admin = () => {
                                 {comp.status.charAt(0).toUpperCase() + comp.status.slice(1)}
                               </Badge>
                             </div>
-                            {comp.description && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{comp.description}</p>
-                            )}
+                            {comp.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{comp.description}</p>}
                             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
                               <span className="capitalize">📊 {comp.difficulty}</span>
                               <span>⏱ {comp.duration / 60} min</span>
@@ -430,6 +360,18 @@ const Admin = () => {
                               {disqualified > 0 && <span className="text-destructive">🚫 {disqualified} DQ</span>}
                               {comp.scheduled_start && <span>📅 {formatDateTime(comp.scheduled_start)}</span>}
                             </div>
+                            {/* Competition link */}
+                            {comp.slug && (
+                              <div className="flex items-center gap-2 mt-2">
+                                <Link2 className="w-3.5 h-3.5 text-primary" />
+                                <code className="text-xs text-primary bg-primary/5 px-2 py-0.5 rounded">
+                                  /competition/{comp.slug}
+                                </code>
+                                <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => copyLink(comp.slug)}>
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
@@ -463,7 +405,7 @@ const Admin = () => {
                         </div>
                       </div>
 
-                      {/* Expanded participants table */}
+                      {/* Expanded participants + leaderboard (admin only) */}
                       {isExpanded && (
                         <div className="border-t border-border/30 bg-secondary/10">
                           {compParticipants.length === 0 ? (
@@ -583,7 +525,7 @@ const Admin = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -592,7 +534,7 @@ const Admin = () => {
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            This will permanently delete the competition and all associated participant data. This action cannot be undone.
+            This will permanently delete the competition and all associated data.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
