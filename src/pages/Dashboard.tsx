@@ -13,7 +13,7 @@ import AdminRequestButton from "@/components/AdminRequestButton";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, user, signOut } = useAuth();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, isOwner } = useAdmin();
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [previousResults, setPreviousResults] = useState<any[]>([]);
   const [practiceStats, setPracticeStats] = useState({ count: 0, totalScore: 0, avgAccuracy: 0 });
@@ -165,8 +165,9 @@ const Dashboard = () => {
               <Globe className="w-4 h-4 mr-1" /> Global LB
             </Button>
             {isAdmin && (
-              <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
-                <Shield className="w-4 h-4 mr-1" /> Admin
+              <Button variant="outline" size="sm" onClick={() => navigate("/admin")} className={isOwner ? "border-warning/40 text-warning hover:bg-warning/10" : ""}>
+                {isOwner ? <Crown className="w-4 h-4 mr-1" /> : <Shield className="w-4 h-4 mr-1" />}
+                Admin Panel
               </Button>
             )}
             {!isAdmin && <AdminRequestButton />}
@@ -179,18 +180,28 @@ const Dashboard = () => {
 
       <div className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
         {/* Welcome */}
-        <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5">
+        <Card className={`bg-gradient-to-br from-card ${isOwner ? "to-warning/5 border-warning/30" : "to-primary/5 border-primary/20"}`}>
           <CardContent className="pt-8 pb-6 px-8">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <User className="w-6 h-6 text-primary" />
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isOwner ? "bg-warning/20" : "bg-primary/20"}`}>
+                  {isOwner ? <Crown className="w-6 h-6 text-warning" /> : <User className="w-6 h-6 text-primary" />}
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold">
                     Welcome, <span className="text-gradient-primary">{profile?.full_name || "Participant"}</span>!
                   </h1>
                   <p className="text-sm text-muted-foreground">@{profile?.username} {profile?.college_name && `· ${profile.college_name}`}</p>
+                  {isOwner && (
+                    <Badge className="mt-1.5 bg-warning/20 text-warning border-warning/30 text-xs">
+                      👑 Platform Owner – {profile?.full_name}
+                    </Badge>
+                  )}
+                  {isAdmin && !isOwner && (
+                    <Badge className="mt-1.5 bg-primary/20 text-primary border-primary/30 text-xs">
+                      🛡️ Admin
+                    </Badge>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
