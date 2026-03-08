@@ -115,7 +115,7 @@ const Index = () => {
           {/* Feature pills */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: "0.4s" }}>
             {[
-              { icon: Zap, label: "AI-Generated", desc: "Unique problems every time" },
+              { icon: Zap, label: "Unique Challenges", desc: "Fresh problems every time" },
               { icon: Timer, label: "Timed Rounds", desc: "10-15 minute challenges" },
               { icon: Trophy, label: "Live Leaderboard", desc: "Real-time rankings" },
               { icon: Shield, label: "Anti-Cheat", desc: "Fair play guaranteed" },
