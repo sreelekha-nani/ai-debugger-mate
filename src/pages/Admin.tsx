@@ -41,6 +41,8 @@ const Admin = () => {
   const navigate = useNavigate();
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [resultsCompId, setResultsCompId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<CompetitionForm>({ ...defaultForm });
   const [editingId, setEditingId] = useState<string | null>(null);
