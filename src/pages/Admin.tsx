@@ -668,10 +668,6 @@ const Admin = () => {
         })()}
       </div>
 
-        {isOwner ? (
-            </TabsContent>
-          </Tabs>
-        ) : null}
 
       {/* Generated Link Dialog */}
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
