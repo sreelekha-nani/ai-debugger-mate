@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Bug, Zap, Lock, Timer } from "lucide-react";
+import { Bug, Zap, Lock, Timer, Camera, Maximize, CheckCircle2, Users, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +17,12 @@ const JoinCompetition = () => {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [participantCount, setParticipantCount] = useState(0);
+
+  // Proctoring steps
+  const [cameraGranted, setCameraGranted] = useState(false);
+  const [fullscreenReady, setFullscreenReady] = useState(false);
+  const [cameraRequesting, setCameraRequesting] = useState(false);
 
   useEffect(() => {
     if (!slug) { setError("Invalid competition link."); setLoading(false); return; }
@@ -31,25 +38,65 @@ const JoinCompetition = () => {
         setError("Competition not found. Please check the link.");
       } else {
         setCompetition(data);
+        // Count participants
+        const { count } = await supabase
+          .from("participants")
+          .select("id", { count: "exact", head: true })
+          .eq("competition_id", data.id);
+        setParticipantCount(count || 0);
       }
       setLoading(false);
     };
 
     fetchComp();
 
-    // Realtime for status changes
     const channel = supabase
       .channel(`comp-join-${slug}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "competitions" }, (payload) => {
-        if (payload.new.slug === slug) setCompetition(payload.new);
+      .on("postgres_changes", { event: "*", schema: "public", table: "competitions" }, (payload: any) => {
+        if (payload.new?.slug === slug) setCompetition(payload.new);
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "participants" }, () => {
+        setParticipantCount((c) => c + 1);
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [slug]);
 
+  const requestCamera = async () => {
+    setCameraRequesting(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach((t) => t.stop()); // stop immediately, Arena will re-request
+      setCameraGranted(true);
+      toast({ title: "Camera access granted ✓" });
+    } catch {
+      toast({ title: "Camera required", description: "Please allow camera access to participate.", variant: "destructive" });
+    } finally {
+      setCameraRequesting(false);
+    }
+  };
+
+  const requestFullscreen = async () => {
+    try {
+      await document.documentElement.requestFullscreen();
+      setFullscreenReady(true);
+      toast({ title: "Fullscreen enabled ✓" });
+      // Exit immediately—Arena will re-enter
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    } catch {
+      toast({ title: "Fullscreen required", description: "Please allow fullscreen mode.", variant: "destructive" });
+    }
+  };
+
   const handleJoin = async () => {
     if (!user || !competition) return;
+
+    // Check max participants
+    if (competition.max_participants && participantCount >= competition.max_participants) {
+      toast({ title: "Competition full", description: "Maximum participants reached.", variant: "destructive" });
+      return;
+    }
 
     // Check if already joined
     const { data: existing } = await supabase
@@ -120,11 +167,14 @@ const JoinCompetition = () => {
   const isActive = competition?.status === "active";
   const isScheduled = competition?.status === "scheduled";
   const isEnded = competition?.status === "ended";
+  const allStepsComplete = cameraGranted && fullscreenReady;
+  const stepsComplete = (cameraGranted ? 1 : 0) + (fullscreenReady ? 1 : 0);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-lg w-full border-primary/20 shadow-2xl">
         <CardContent className="pt-8 pb-6 space-y-6">
+          {/* Header */}
           <div className="text-center">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 glow-primary">
               <Bug className="w-8 h-8 text-primary" />
@@ -135,9 +185,14 @@ const JoinCompetition = () => {
             )}
           </div>
 
-          <div className="flex justify-center gap-2">
+          {/* Info badges */}
+          <div className="flex justify-center gap-2 flex-wrap">
             <Badge variant="outline" className="capitalize">{competition.difficulty}</Badge>
             <Badge variant="outline">⏱ {competition.duration / 60} min</Badge>
+            <Badge variant="outline">
+              <Users className="w-3 h-3 mr-1" />
+              {participantCount}{competition.max_participants ? `/${competition.max_participants}` : ""} joined
+            </Badge>
             <Badge
               variant={isActive ? "default" : isEnded ? "secondary" : "outline"}
               className={isActive ? "bg-success text-success-foreground" : ""}
@@ -148,19 +203,76 @@ const JoinCompetition = () => {
             </Badge>
           </div>
 
+          {/* Logged in as */}
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border/30">
+            <ShieldCheck className="w-4 h-4 text-success shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{profile?.full_name || profile?.email}</p>
+              <p className="text-xs text-muted-foreground">{profile?.email}</p>
+            </div>
+            <Badge variant="outline" className="text-xs shrink-0">Logged In</Badge>
+          </div>
+
+          {/* Active: Proctoring Steps */}
           {isActive && (
-            <Button onClick={handleJoin} disabled={joining} className="w-full h-12 text-base font-bold glow-primary">
-              {joining ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
-                  Joining...
-                </>
-              ) : (
-                <>
-                  <Zap className="w-4 h-4 mr-2" /> Enter Competition
-                </>
-              )}
-            </Button>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-bold">Pre-Exam Setup</p>
+                <span className="text-xs text-muted-foreground">{stepsComplete}/2 complete</span>
+              </div>
+              <Progress value={(stepsComplete / 2) * 100} className="h-1.5" />
+
+              {/* Step 1: Camera */}
+              <div className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${cameraGranted ? "border-success/30 bg-success/5" : "border-border/50"}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${cameraGranted ? "bg-success/20" : "bg-muted"}`}>
+                  {cameraGranted ? <CheckCircle2 className="w-4 h-4 text-success" /> : <Camera className="w-4 h-4 text-muted-foreground" />}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Camera Permission</p>
+                  <p className="text-xs text-muted-foreground">Required for proctoring</p>
+                </div>
+                {!cameraGranted && (
+                  <Button size="sm" variant="outline" onClick={requestCamera} disabled={cameraRequesting}>
+                    {cameraRequesting ? "Requesting..." : "Allow"}
+                  </Button>
+                )}
+              </div>
+
+              {/* Step 2: Fullscreen */}
+              <div className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${fullscreenReady ? "border-success/30 bg-success/5" : "border-border/50"}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${fullscreenReady ? "bg-success/20" : "bg-muted"}`}>
+                  {fullscreenReady ? <CheckCircle2 className="w-4 h-4 text-success" /> : <Maximize className="w-4 h-4 text-muted-foreground" />}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Fullscreen Mode</p>
+                  <p className="text-xs text-muted-foreground">Required during competition</p>
+                </div>
+                {!fullscreenReady && (
+                  <Button size="sm" variant="outline" onClick={requestFullscreen}>
+                    Enable
+                  </Button>
+                )}
+              </div>
+
+              <Button
+                onClick={handleJoin}
+                disabled={joining || !allStepsComplete}
+                className="w-full h-12 text-base font-bold glow-primary"
+              >
+                {joining ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
+                    Joining...
+                  </>
+                ) : !allStepsComplete ? (
+                  "Complete all steps to join"
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4 mr-2" /> Enter Competition
+                  </>
+                )}
+              </Button>
+            </div>
           )}
 
           {isScheduled && (
