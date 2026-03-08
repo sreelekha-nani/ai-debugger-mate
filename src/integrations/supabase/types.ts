@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_requests: {
+        Row: {
+          id: string
+          requested_at: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          requested_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          requested_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       competitions: {
         Row: {
           actual_start: string | null
@@ -139,6 +166,27 @@ export type Database = {
           },
         ]
       }
+      platform_settings: {
+        Row: {
+          admin_access_enabled: boolean
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          admin_access_enabled?: boolean
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          admin_access_enabled?: boolean
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       practice_submissions: {
         Row: {
           accuracy: number | null
@@ -179,27 +227,36 @@ export type Database = {
         Row: {
           college_name: string | null
           created_at: string
+          current_streak: number
           email: string
           full_name: string
           id: string
+          last_practice_date: string | null
+          longest_streak: number
           updated_at: string
           username: string
         }
         Insert: {
           college_name?: string | null
           created_at?: string
+          current_streak?: number
           email: string
           full_name: string
           id: string
+          last_practice_date?: string | null
+          longest_streak?: number
           updated_at?: string
           username: string
         }
         Update: {
           college_name?: string | null
           created_at?: string
+          current_streak?: number
           email?: string
           full_name?: string
           id?: string
+          last_practice_date?: string | null
+          longest_streak?: number
           updated_at?: string
           username?: string
         }
@@ -237,7 +294,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "owner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -365,7 +422,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "owner"],
     },
   },
 } as const

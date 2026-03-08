@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Shield, Play, Square, Users, Clock, Download, RefreshCw, Trophy, Bug,
   AlertTriangle, Eye, Pencil, Trash2, Plus, Calendar, X, ChevronDown, ChevronUp, Link2, Copy,
-  Share2, ExternalLink, UserCheck, Monitor
+  Share2, ExternalLink, UserCheck, Monitor, Crown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +14,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdmin } from "@/hooks/useAdmin";
+import OwnerPanel from "@/components/OwnerPanel";
 
 interface CompetitionForm {
   title: string;
@@ -39,6 +42,7 @@ const defaultForm: CompetitionForm = {
 
 const Admin = () => {
   const navigate = useNavigate();
+  const { isOwner } = useAdmin();
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -246,8 +250,9 @@ const Admin = () => {
       <div className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Shield className="w-6 h-6 text-primary" />
-            <h1 className="text-lg font-bold">Admin Dashboard</h1>
+            {isOwner ? <Crown className="w-6 h-6 text-warning" /> : <Shield className="w-6 h-6 text-primary" />}
+            <h1 className="text-lg font-bold">{isOwner ? "Owner Dashboard" : "Admin Dashboard"}</h1>
+            {isOwner && <Badge className="bg-warning/20 text-warning border-warning/30 text-xs">👑 Owner</Badge>}
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => { fetchData(); checkCompetitions(); }}>
@@ -261,6 +266,17 @@ const Admin = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6 space-y-6 max-w-6xl">
+        {isOwner && (
+          <Tabs defaultValue="competitions" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 max-w-md">
+              <TabsTrigger value="competitions">🏆 Competitions</TabsTrigger>
+              <TabsTrigger value="owner">👑 Owner Panel</TabsTrigger>
+            </TabsList>
+            <TabsContent value="owner">
+              <OwnerPanel />
+            </TabsContent>
+          </Tabs>
+        )}
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {[
@@ -651,6 +667,7 @@ const Admin = () => {
           );
         })()}
       </div>
+
 
       {/* Generated Link Dialog */}
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>

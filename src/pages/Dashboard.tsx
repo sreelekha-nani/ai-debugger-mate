@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bug, Trophy, Clock, Play, LogOut, User, Award, Timer, Zap, ChevronRight, Calendar, CheckCircle2, Code2, Shield } from "lucide-react";
+import { Bug, Trophy, Clock, Play, LogOut, User, Award, Timer, Zap, ChevronRight, Calendar, CheckCircle2, Code2, Shield, Flame, Crown, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
+import AdminRequestButton from "@/components/AdminRequestButton";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const Dashboard = () => {
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [previousResults, setPreviousResults] = useState<any[]>([]);
   const [practiceStats, setPracticeStats] = useState({ count: 0, totalScore: 0, avgAccuracy: 0 });
+  const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,6 +50,19 @@ const Dashboard = () => {
             count: practice.length,
             totalScore: practice.reduce((a, r) => a + (r.score || 0), 0),
             avgAccuracy: Math.round(practice.reduce((a, r) => a + (Number(r.accuracy) || 0), 0) / practice.length),
+          });
+        }
+
+        // Fetch streak data from profile
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("current_streak, longest_streak")
+          .eq("id", user.id)
+          .single();
+        if (profileData) {
+          setStreakData({
+            current: (profileData as any).current_streak || 0,
+            longest: (profileData as any).longest_streak || 0,
           });
         }
       }
@@ -144,13 +159,17 @@ const Dashboard = () => {
               <Code2 className="w-4 h-4 mr-1" /> Practice
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/practice-leaderboard")}>
-              <Trophy className="w-4 h-4 mr-1" /> Leaderboard
+              <Trophy className="w-4 h-4 mr-1" /> Practice LB
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/global-leaderboard")}>
+              <Globe className="w-4 h-4 mr-1" /> Global LB
             </Button>
             {isAdmin && (
               <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
                 <Shield className="w-4 h-4 mr-1" /> Admin
               </Button>
             )}
+            {!isAdmin && <AdminRequestButton />}
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-1" /> Sign Out
             </Button>
@@ -174,34 +193,48 @@ const Dashboard = () => {
                   <p className="text-sm text-muted-foreground">@{profile?.username} {profile?.college_name && `· ${profile.college_name}`}</p>
                 </div>
               </div>
-              <Badge variant="outline" className="text-xs border-success/30 text-success">
-                <div className="w-1.5 h-1.5 rounded-full bg-success mr-1.5 animate-pulse" /> Online
-              </Badge>
+              <div className="flex items-center gap-2">
+                {streakData.current > 0 && (
+                  <Badge variant="outline" className="text-xs border-warning/30 text-warning">
+                    🔥 {streakData.current} day streak
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-xs border-success/30 text-success">
+                  <div className="w-1.5 h-1.5 rounded-full bg-success mr-1.5 animate-pulse" /> Online
+                </Badge>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="border-primary/20 hover:border-primary/40 transition-all cursor-pointer group" onClick={() => navigate("/practice")}>
             <CardContent className="pt-6 pb-5 text-center">
               <Code2 className="w-8 h-8 text-primary mx-auto mb-2 group-hover:scale-110 transition-transform" />
               <h3 className="font-bold">Practice Arena</h3>
-              <p className="text-xs text-muted-foreground mt-1">Solve random debugging challenges</p>
+              <p className="text-xs text-muted-foreground mt-1">Solve debugging challenges</p>
             </CardContent>
           </Card>
-          <Card className="border-accent/20 hover:border-accent/40 transition-all cursor-pointer group" onClick={() => navigate("/practice-leaderboard")}>
+          <Card className="border-accent/20 hover:border-accent/40 transition-all cursor-pointer group" onClick={() => navigate("/global-leaderboard")}>
             <CardContent className="pt-6 pb-5 text-center">
-              <Trophy className="w-8 h-8 text-accent mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <Globe className="w-8 h-8 text-accent mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <h3 className="font-bold">Global Leaderboard</h3>
+              <p className="text-xs text-muted-foreground mt-1">Combined rankings</p>
+            </CardContent>
+          </Card>
+          <Card className="border-warning/20 hover:border-warning/40 transition-all cursor-pointer group" onClick={() => navigate("/practice-leaderboard")}>
+            <CardContent className="pt-6 pb-5 text-center">
+              <Trophy className="w-8 h-8 text-warning mx-auto mb-2 group-hover:scale-110 transition-transform" />
               <h3 className="font-bold">Practice Leaderboard</h3>
-              <p className="text-xs text-muted-foreground mt-1">See all-time practice rankings</p>
+              <p className="text-xs text-muted-foreground mt-1">Practice rankings</p>
             </CardContent>
           </Card>
-          <Card className="border-warning/20 hover:border-warning/40 transition-all cursor-pointer group">
+          <Card className="border-success/20 hover:border-success/40 transition-all cursor-pointer group">
             <CardContent className="pt-6 pb-5 text-center">
-              <Zap className="w-8 h-8 text-warning mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <Zap className="w-8 h-8 text-success mx-auto mb-2 group-hover:scale-110 transition-transform" />
               <h3 className="font-bold">Join Competition</h3>
-              <p className="text-xs text-muted-foreground mt-1">Use a competition link from admin</p>
+              <p className="text-xs text-muted-foreground mt-1">Use a contest link</p>
             </CardContent>
           </Card>
         </div>
@@ -289,7 +322,7 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 rounded-lg bg-primary/5 text-center">
                   <p className="text-2xl font-bold text-primary">{previousResults.length}</p>
                   <p className="text-xs text-muted-foreground">Competitions</p>
@@ -304,7 +337,15 @@ const Dashboard = () => {
                 </div>
                 <div className="p-3 rounded-lg bg-warning/5 text-center">
                   <p className="text-2xl font-bold text-warning">{practiceStats.totalScore}</p>
-                  <p className="text-xs text-muted-foreground">Practice Score</p>
+                  <p className="text-xs text-muted-foreground">Total Score</p>
+                </div>
+                <div className="p-3 rounded-lg bg-destructive/5 text-center">
+                  <p className="text-2xl font-bold text-destructive">🔥 {streakData.current}</p>
+                  <p className="text-xs text-muted-foreground">Current Streak</p>
+                </div>
+                <div className="p-3 rounded-lg bg-secondary/50 text-center">
+                  <p className="text-2xl font-bold text-foreground">🏆 {streakData.longest}</p>
+                  <p className="text-xs text-muted-foreground">Longest Streak</p>
                 </div>
               </div>
             </CardContent>
