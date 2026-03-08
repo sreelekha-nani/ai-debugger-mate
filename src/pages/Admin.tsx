@@ -438,7 +438,7 @@ const Admin = () => {
                                 <Square className="w-3.5 h-3.5 mr-1" /> End
                               </Button>
                             )}
-                            <Button size="sm" variant="outline" onClick={() => downloadResults(comp.id)}>
+                            <Button size="sm" variant="outline" onClick={() => downloadResults(comp.id, "csv")}>
                               <Download className="w-3.5 h-3.5" />
                             </Button>
                             {comp.status !== "active" && (
