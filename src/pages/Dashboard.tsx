@@ -208,26 +208,33 @@ const Dashboard = () => {
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="border-primary/20 hover:border-primary/40 transition-all cursor-pointer group" onClick={() => navigate("/practice")}>
             <CardContent className="pt-6 pb-5 text-center">
               <Code2 className="w-8 h-8 text-primary mx-auto mb-2 group-hover:scale-110 transition-transform" />
               <h3 className="font-bold">Practice Arena</h3>
-              <p className="text-xs text-muted-foreground mt-1">Solve random debugging challenges</p>
+              <p className="text-xs text-muted-foreground mt-1">Solve debugging challenges</p>
             </CardContent>
           </Card>
-          <Card className="border-accent/20 hover:border-accent/40 transition-all cursor-pointer group" onClick={() => navigate("/practice-leaderboard")}>
+          <Card className="border-accent/20 hover:border-accent/40 transition-all cursor-pointer group" onClick={() => navigate("/global-leaderboard")}>
             <CardContent className="pt-6 pb-5 text-center">
-              <Trophy className="w-8 h-8 text-accent mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <Globe className="w-8 h-8 text-accent mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <h3 className="font-bold">Global Leaderboard</h3>
+              <p className="text-xs text-muted-foreground mt-1">Combined rankings</p>
+            </CardContent>
+          </Card>
+          <Card className="border-warning/20 hover:border-warning/40 transition-all cursor-pointer group" onClick={() => navigate("/practice-leaderboard")}>
+            <CardContent className="pt-6 pb-5 text-center">
+              <Trophy className="w-8 h-8 text-warning mx-auto mb-2 group-hover:scale-110 transition-transform" />
               <h3 className="font-bold">Practice Leaderboard</h3>
-              <p className="text-xs text-muted-foreground mt-1">See all-time practice rankings</p>
+              <p className="text-xs text-muted-foreground mt-1">Practice rankings</p>
             </CardContent>
           </Card>
-          <Card className="border-warning/20 hover:border-warning/40 transition-all cursor-pointer group">
+          <Card className="border-success/20 hover:border-success/40 transition-all cursor-pointer group">
             <CardContent className="pt-6 pb-5 text-center">
-              <Zap className="w-8 h-8 text-warning mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <Zap className="w-8 h-8 text-success mx-auto mb-2 group-hover:scale-110 transition-transform" />
               <h3 className="font-bold">Join Competition</h3>
-              <p className="text-xs text-muted-foreground mt-1">Use a competition link from admin</p>
+              <p className="text-xs text-muted-foreground mt-1">Use a contest link</p>
             </CardContent>
           </Card>
         </div>
