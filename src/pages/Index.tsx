@@ -77,7 +77,7 @@ const Index = () => {
 
         <div className="relative container mx-auto px-4 text-center max-w-4xl">
           <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm border-primary/30 text-primary animate-slide-down">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> AI-Powered Debugging Challenge
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Competitive Debugging Challenge
           </Badge>
 
           <h1 className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight mb-4 animate-slide-up">
