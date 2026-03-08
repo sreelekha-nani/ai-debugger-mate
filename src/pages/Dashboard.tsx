@@ -13,7 +13,7 @@ import AdminRequestButton from "@/components/AdminRequestButton";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, user, signOut } = useAuth();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, isOwner } = useAdmin();
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [previousResults, setPreviousResults] = useState<any[]>([]);
   const [practiceStats, setPracticeStats] = useState({ count: 0, totalScore: 0, avgAccuracy: 0 });
