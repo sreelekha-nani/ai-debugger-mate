@@ -20,10 +20,12 @@ export type Database = {
           admin_password_hash: string | null
           challenge_data: Json | null
           created_at: string
+          description: string | null
           difficulty: string
           duration: number
           ended_at: string | null
           id: string
+          scheduled_end: string | null
           scheduled_start: string | null
           status: string
           title: string
@@ -33,10 +35,12 @@ export type Database = {
           admin_password_hash?: string | null
           challenge_data?: Json | null
           created_at?: string
+          description?: string | null
           difficulty?: string
           duration?: number
           ended_at?: string | null
           id?: string
+          scheduled_end?: string | null
           scheduled_start?: string | null
           status?: string
           title?: string
@@ -46,10 +50,12 @@ export type Database = {
           admin_password_hash?: string | null
           challenge_data?: Json | null
           created_at?: string
+          description?: string | null
           difficulty?: string
           duration?: number
           ended_at?: string | null
           id?: string
+          scheduled_end?: string | null
           scheduled_start?: string | null
           status?: string
           title?: string
