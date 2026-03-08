@@ -77,7 +77,7 @@ const Index = () => {
 
         <div className="relative container mx-auto px-4 text-center max-w-4xl">
           <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm border-primary/30 text-primary animate-slide-down">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> AI-Powered Debugging Challenge
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Competitive Debugging Challenge
           </Badge>
 
           <h1 className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight mb-4 animate-slide-up">
@@ -91,7 +91,7 @@ const Index = () => {
           </p>
 
           <p className="text-muted-foreground max-w-2xl mx-auto mb-10 text-lg animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            Race against time to debug AI-generated Python programs. Every challenge is unique, every second counts. Prove your debugging skills in this competitive coding arena.
+            Race against time to debug Python programs. Every challenge is unique, every second counts. Prove your debugging skills in this competitive coding arena.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-scale-in" style={{ animationDelay: "0.3s" }}>
@@ -115,7 +115,7 @@ const Index = () => {
           {/* Feature pills */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: "0.4s" }}>
             {[
-              { icon: Zap, label: "AI-Generated", desc: "Unique problems every time" },
+              { icon: Zap, label: "Unique Challenges", desc: "Fresh problems every time" },
               { icon: Timer, label: "Timed Rounds", desc: "10-15 minute challenges" },
               { icon: Trophy, label: "Live Leaderboard", desc: "Real-time rankings" },
               { icon: Shield, label: "Anti-Cheat", desc: "Fair play guaranteed" },
@@ -139,7 +139,7 @@ const Index = () => {
             </Badge>
             <h2 className="text-3xl md:text-5xl font-bold mb-4">What is Bug Busters?</h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              A competitive debugging platform where participants race to fix AI-generated buggy Python code under time pressure.
+              A competitive debugging platform where participants race to fix buggy Python code under time pressure.
             </p>
           </div>
 
@@ -147,8 +147,8 @@ const Index = () => {
             {[
               {
                 icon: Sparkles,
-                title: "AI-Powered Challenges",
-                desc: "Every participant receives a unique, AI-generated buggy program. No two challenges are the same — no memorization, just pure skill.",
+                title: "Unique Challenges",
+                desc: "Every participant receives a unique buggy program. No two challenges are the same — no memorization, just pure skill.",
               },
               {
                 icon: Code2,

@@ -145,8 +145,8 @@ const Arena = () => {
           <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto glow-primary">
             <Bug className="w-10 h-10 text-primary animate-float" />
           </div>
-          <h2 className="text-3xl font-bold">Generating Your Challenge...</h2>
-          <p className="text-muted-foreground text-lg">AI is crafting a unique buggy program for you</p>
+          <h2 className="text-3xl font-bold">Preparing Your Challenge...</h2>
+          <p className="text-muted-foreground text-lg">Crafting a unique debugging challenge for you</p>
           <div className="flex items-center justify-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "0.2s" }} />
