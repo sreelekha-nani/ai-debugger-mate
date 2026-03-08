@@ -17,6 +17,7 @@ const Dashboard = () => {
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [previousResults, setPreviousResults] = useState<any[]>([]);
   const [practiceStats, setPracticeStats] = useState({ count: 0, totalScore: 0, avgAccuracy: 0 });
+  const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
 
   useEffect(() => {
     const fetchData = async () => {
