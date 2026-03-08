@@ -54,12 +54,14 @@ const Admin = () => {
   const [generatedLink, setGeneratedLink] = useState({ url: "", title: "", slug: "" });
 
   const fetchData = useCallback(async () => {
-    const [compRes, partRes] = await Promise.all([
+    const [compRes, partRes, profRes] = await Promise.all([
       supabase.from("competitions").select("*").order("created_at", { ascending: false }),
       supabase.from("participants").select("*").order("joined_at", { ascending: false }),
+      supabase.from("profiles").select("id, email, full_name"),
     ]);
     if (compRes.data) setCompetitions(compRes.data);
     if (partRes.data) setParticipants(partRes.data);
+    if (profRes.data) setProfiles(profRes.data);
   }, []);
 
   const checkCompetitions = useCallback(async () => {
