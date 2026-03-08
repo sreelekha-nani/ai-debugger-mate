@@ -290,6 +290,37 @@ const OwnerPanel = () => {
         </CardContent>
       </Card>
 
+      {/* Invite Admin by Email */}
+      <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <UserPlus className="w-4 h-4 text-primary" /> Invite Admin by Email
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end gap-3">
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs font-medium">Registered User Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder="user@example.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && inviteAdmin()}
+                  className="pl-9 h-10"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">The user must already have a registered account.</p>
+            </div>
+            <Button onClick={inviteAdmin} disabled={inviteLoading || !inviteEmail.trim()} className="h-10">
+              <UserPlus className="w-4 h-4 mr-1" /> {inviteLoading ? "Adding..." : "Add as Admin"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Current Admins */}
       <Card className="border-border/50">
         <CardHeader className="pb-3">
