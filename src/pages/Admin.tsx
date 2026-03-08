@@ -200,23 +200,42 @@ const Admin = () => {
     fetchData();
   };
 
-  const downloadResults = (competitionId: string) => {
+  const getEmail = (userId: string | null) => {
+    if (!userId) return "N/A";
+    const profile = profiles.find((p) => p.id === userId);
+    return profile?.email || "N/A";
+  };
+
+  const downloadResults = (competitionId: string, format: "csv" | "excel" = "csv") => {
     const compParticipants = participants
       .filter((p) => p.competition_id === competitionId)
       .sort((a, b) => (b.score || 0) - (a.score || 0));
-    const csv = [
-      "Rank,Name,Team,Score,Bugs Fixed,Total Bugs,Accuracy,Time Spent (s),Warnings,Disqualified,Submitted At",
-      ...compParticipants.map((p, i) =>
-        `${i + 1},"${p.name}","${p.team}",${p.score},${p.bugs_fixed},${p.total_bugs},${p.accuracy}%,${p.time_spent},${p.warnings},${p.disqualified},${p.submitted_at || "N/A"}`
-      ),
-    ].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `bugbusters-results-${competitionId.slice(0, 8)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const headers = "Rank,Name,Email,Bugs Fixed,Total Bugs,Accuracy,Time Spent (s),Score,Warnings,Disqualified,Submitted At";
+    const rows = compParticipants.map((p, i) =>
+      `${i + 1},"${p.name}","${getEmail(p.user_id)}",${p.bugs_fixed || 0},${p.total_bugs || 0},${p.accuracy || 0}%,${p.time_spent || 0},${p.score || 0},${p.warnings},${p.disqualified},${p.submitted_at || "N/A"}`
+    );
+    const content = [headers, ...rows].join("\n");
+
+    if (format === "excel") {
+      // TSV format opens natively in Excel
+      const tsvContent = content.replace(/,/g, "\t").replace(/"/g, "");
+      const blob = new Blob(["\uFEFF" + tsvContent], { type: "application/vnd.ms-excel;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bugbusters-results-${competitionId.slice(0, 8)}.xls`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const blob = new Blob([content], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bugbusters-results-${competitionId.slice(0, 8)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    toast({ title: `Results downloaded as ${format.toUpperCase()}` });
   };
 
   const formatDateTime = (iso: string | null) => iso ? new Date(iso).toLocaleString() : "—";
