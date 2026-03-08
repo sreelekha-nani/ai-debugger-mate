@@ -83,7 +83,7 @@ const Arena = () => {
       }
 
       setCompetition(comp);
-      const ch = comp.challenge_data as Challenge;
+      const ch = comp.challenge_data as unknown as Challenge;
       setChallenge(ch);
       setCode(ch.buggyCode);
 
