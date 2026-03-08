@@ -165,8 +165,9 @@ const Dashboard = () => {
               <Globe className="w-4 h-4 mr-1" /> Global LB
             </Button>
             {isAdmin && (
-              <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
-                <Shield className="w-4 h-4 mr-1" /> Admin
+              <Button variant="outline" size="sm" onClick={() => navigate("/admin")} className={isOwner ? "border-warning/40 text-warning hover:bg-warning/10" : ""}>
+                {isOwner ? <Crown className="w-4 h-4 mr-1" /> : <Shield className="w-4 h-4 mr-1" />}
+                Admin Panel
               </Button>
             )}
             {!isAdmin && <AdminRequestButton />}
