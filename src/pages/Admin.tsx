@@ -41,6 +41,8 @@ const Admin = () => {
   const navigate = useNavigate();
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [resultsCompId, setResultsCompId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<CompetitionForm>({ ...defaultForm });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -52,12 +54,14 @@ const Admin = () => {
   const [generatedLink, setGeneratedLink] = useState({ url: "", title: "", slug: "" });
 
   const fetchData = useCallback(async () => {
-    const [compRes, partRes] = await Promise.all([
+    const [compRes, partRes, profRes] = await Promise.all([
       supabase.from("competitions").select("*").order("created_at", { ascending: false }),
       supabase.from("participants").select("*").order("joined_at", { ascending: false }),
+      supabase.from("profiles").select("id, email, full_name"),
     ]);
     if (compRes.data) setCompetitions(compRes.data);
     if (partRes.data) setParticipants(partRes.data);
+    if (profRes.data) setProfiles(profRes.data);
   }, []);
 
   const checkCompetitions = useCallback(async () => {
@@ -196,23 +200,42 @@ const Admin = () => {
     fetchData();
   };
 
-  const downloadResults = (competitionId: string) => {
+  const getEmail = (userId: string | null) => {
+    if (!userId) return "N/A";
+    const profile = profiles.find((p) => p.id === userId);
+    return profile?.email || "N/A";
+  };
+
+  const downloadResults = (competitionId: string, format: "csv" | "excel" = "csv") => {
     const compParticipants = participants
       .filter((p) => p.competition_id === competitionId)
       .sort((a, b) => (b.score || 0) - (a.score || 0));
-    const csv = [
-      "Rank,Name,Team,Score,Bugs Fixed,Total Bugs,Accuracy,Time Spent (s),Warnings,Disqualified,Submitted At",
-      ...compParticipants.map((p, i) =>
-        `${i + 1},"${p.name}","${p.team}",${p.score},${p.bugs_fixed},${p.total_bugs},${p.accuracy}%,${p.time_spent},${p.warnings},${p.disqualified},${p.submitted_at || "N/A"}`
-      ),
-    ].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `bugbusters-results-${competitionId.slice(0, 8)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const headers = "Rank,Name,Email,Bugs Fixed,Total Bugs,Accuracy,Time Spent (s),Score,Warnings,Disqualified,Submitted At";
+    const rows = compParticipants.map((p, i) =>
+      `${i + 1},"${p.name}","${getEmail(p.user_id)}",${p.bugs_fixed || 0},${p.total_bugs || 0},${p.accuracy || 0}%,${p.time_spent || 0},${p.score || 0},${p.warnings},${p.disqualified},${p.submitted_at || "N/A"}`
+    );
+    const content = [headers, ...rows].join("\n");
+
+    if (format === "excel") {
+      // TSV format opens natively in Excel
+      const tsvContent = content.replace(/,/g, "\t").replace(/"/g, "");
+      const blob = new Blob(["\uFEFF" + tsvContent], { type: "application/vnd.ms-excel;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bugbusters-results-${competitionId.slice(0, 8)}.xls`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const blob = new Blob([content], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bugbusters-results-${competitionId.slice(0, 8)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    toast({ title: `Results downloaded as ${format.toUpperCase()}` });
   };
 
   const formatDateTime = (iso: string | null) => iso ? new Date(iso).toLocaleString() : "—";
@@ -415,7 +438,7 @@ const Admin = () => {
                                 <Square className="w-3.5 h-3.5 mr-1" /> End
                               </Button>
                             )}
-                            <Button size="sm" variant="outline" onClick={() => downloadResults(comp.id)}>
+                            <Button size="sm" variant="outline" onClick={() => downloadResults(comp.id, "csv")}>
                               <Download className="w-3.5 h-3.5" />
                             </Button>
                             {comp.status !== "active" && (
@@ -524,6 +547,109 @@ const Admin = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Competition Results Section */}
+        {(() => {
+          const endedComps = competitions.filter((c) => c.status === "ended");
+          if (endedComps.length === 0) return null;
+          return (
+            <Card className="border-accent/20">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-accent" /> Competition Results
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {endedComps.map((comp) => (
+                    <Button
+                      key={comp.id}
+                      size="sm"
+                      variant={resultsCompId === comp.id ? "default" : "outline"}
+                      onClick={() => setResultsCompId(resultsCompId === comp.id ? null : comp.id)}
+                    >
+                      {comp.title}
+                    </Button>
+                  ))}
+                </div>
+
+                {resultsCompId && (() => {
+                  const comp = competitions.find((c) => c.id === resultsCompId);
+                  const compParticipants = participants
+                    .filter((p) => p.competition_id === resultsCompId)
+                    .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+                  if (!comp) return null;
+                  return (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div>
+                          <h3 className="font-bold text-lg">{comp.title}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            Ended: {formatDateTime(comp.ended_at)} · {compParticipants.length} participants
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => downloadResults(resultsCompId, "csv")}>
+                            <Download className="w-3.5 h-3.5 mr-1" /> CSV
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => downloadResults(resultsCompId, "excel")}>
+                            <Download className="w-3.5 h-3.5 mr-1" /> Excel
+                          </Button>
+                        </div>
+                      </div>
+
+                      {compParticipants.length === 0 ? (
+                        <div className="text-center py-8 text-sm text-muted-foreground">No participants in this competition.</div>
+                      ) : (
+                        <div className="rounded-xl border border-border/50 overflow-hidden">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-muted/30">
+                                <TableHead className="text-xs w-12">Rank</TableHead>
+                                <TableHead className="text-xs">Name</TableHead>
+                                <TableHead className="text-xs">Email</TableHead>
+                                <TableHead className="text-xs text-center">Bugs Fixed</TableHead>
+                                <TableHead className="text-xs text-center">Time Taken</TableHead>
+                                <TableHead className="text-xs text-center">Score</TableHead>
+                                <TableHead className="text-xs text-center">Status</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {compParticipants.map((p, i) => (
+                                <TableRow key={p.id} className={`border-border/20 ${i < 3 ? "bg-primary/5" : ""}`}>
+                                  <TableCell className="font-mono font-bold text-sm">
+                                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                                  </TableCell>
+                                  <TableCell className="font-medium text-sm">{p.name}</TableCell>
+                                  <TableCell className="text-sm text-muted-foreground">{getEmail(p.user_id)}</TableCell>
+                                  <TableCell className="text-center font-mono text-sm">{p.bugs_fixed || 0}/{p.total_bugs || 0}</TableCell>
+                                  <TableCell className="text-center font-mono text-sm">
+                                    {p.time_spent ? `${Math.floor(p.time_spent / 60)}m ${p.time_spent % 60}s` : "—"}
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    <Badge variant="default" className="font-mono font-bold">{p.score || 0}</Badge>
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {p.disqualified ? (
+                                      <Badge variant="destructive" className="text-xs">Disqualified</Badge>
+                                    ) : (
+                                      <Badge className="text-xs bg-success text-success-foreground">Completed</Badge>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          );
+        })()}
       </div>
 
       {/* Generated Link Dialog */}
