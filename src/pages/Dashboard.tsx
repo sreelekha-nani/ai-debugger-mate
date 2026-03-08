@@ -193,9 +193,16 @@ const Dashboard = () => {
                   <p className="text-sm text-muted-foreground">@{profile?.username} {profile?.college_name && `· ${profile.college_name}`}</p>
                 </div>
               </div>
-              <Badge variant="outline" className="text-xs border-success/30 text-success">
-                <div className="w-1.5 h-1.5 rounded-full bg-success mr-1.5 animate-pulse" /> Online
-              </Badge>
+              <div className="flex items-center gap-2">
+                {streakData.current > 0 && (
+                  <Badge variant="outline" className="text-xs border-warning/30 text-warning">
+                    🔥 {streakData.current} day streak
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-xs border-success/30 text-success">
+                  <div className="w-1.5 h-1.5 rounded-full bg-success mr-1.5 animate-pulse" /> Online
+                </Badge>
+              </div>
             </div>
           </CardContent>
         </Card>
