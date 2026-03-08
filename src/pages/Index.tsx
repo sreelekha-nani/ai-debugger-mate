@@ -147,8 +147,8 @@ const Index = () => {
             {[
               {
                 icon: Sparkles,
-                title: "AI-Powered Challenges",
-                desc: "Every participant receives a unique, AI-generated buggy program. No two challenges are the same — no memorization, just pure skill.",
+                title: "Unique Challenges",
+                desc: "Every participant receives a unique buggy program. No two challenges are the same — no memorization, just pure skill.",
               },
               {
                 icon: Code2,
