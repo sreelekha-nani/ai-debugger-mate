@@ -219,7 +219,16 @@ const Dashboard = () => {
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className={`grid grid-cols-1 gap-4 ${isAdmin ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
+          {isAdmin && (
+            <Card className="border-primary/30 hover:border-primary/50 transition-all cursor-pointer group bg-gradient-to-br from-card to-primary/5" onClick={() => navigate("/admin")}>
+              <CardContent className="pt-6 pb-5 text-center">
+                <Plus className="w-8 h-8 text-primary mx-auto mb-2 group-hover:scale-110 transition-transform" />
+                <h3 className="font-bold">Create Competition</h3>
+                <p className="text-xs text-muted-foreground mt-1">Set up a new contest</p>
+              </CardContent>
+            </Card>
+          )}
           <Card className="border-primary/20 hover:border-primary/40 transition-all cursor-pointer group" onClick={() => navigate("/practice")}>
             <CardContent className="pt-6 pb-5 text-center">
               <Code2 className="w-8 h-8 text-primary mx-auto mb-2 group-hover:scale-110 transition-transform" />
