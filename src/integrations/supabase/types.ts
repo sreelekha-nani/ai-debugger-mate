@@ -14,7 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      competitions: {
+        Row: {
+          actual_start: string | null
+          admin_password_hash: string | null
+          challenge_data: Json | null
+          created_at: string
+          difficulty: string
+          duration: number
+          ended_at: string | null
+          id: string
+          scheduled_start: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          actual_start?: string | null
+          admin_password_hash?: string | null
+          challenge_data?: Json | null
+          created_at?: string
+          difficulty?: string
+          duration?: number
+          ended_at?: string | null
+          id?: string
+          scheduled_start?: string | null
+          status?: string
+          title?: string
+        }
+        Update: {
+          actual_start?: string | null
+          admin_password_hash?: string | null
+          challenge_data?: Json | null
+          created_at?: string
+          difficulty?: string
+          duration?: number
+          ended_at?: string | null
+          id?: string
+          scheduled_start?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      participants: {
+        Row: {
+          accuracy: number | null
+          bugs_fixed: number | null
+          code: string | null
+          competition_id: string
+          disqualified: boolean
+          id: string
+          joined_at: string
+          name: string
+          score: number | null
+          submitted: boolean
+          submitted_at: string | null
+          team: string | null
+          time_spent: number | null
+          total_bugs: number | null
+          warning_details: Json | null
+          warnings: number
+          webcam_active: boolean
+        }
+        Insert: {
+          accuracy?: number | null
+          bugs_fixed?: number | null
+          code?: string | null
+          competition_id: string
+          disqualified?: boolean
+          id?: string
+          joined_at?: string
+          name: string
+          score?: number | null
+          submitted?: boolean
+          submitted_at?: string | null
+          team?: string | null
+          time_spent?: number | null
+          total_bugs?: number | null
+          warning_details?: Json | null
+          warnings?: number
+          webcam_active?: boolean
+        }
+        Update: {
+          accuracy?: number | null
+          bugs_fixed?: number | null
+          code?: string | null
+          competition_id?: string
+          disqualified?: boolean
+          id?: string
+          joined_at?: string
+          name?: string
+          score?: number | null
+          submitted?: boolean
+          submitted_at?: string | null
+          team?: string | null
+          time_spent?: number | null
+          total_bugs?: number | null
+          warning_details?: Json | null
+          warnings?: number
+          webcam_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participants_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
