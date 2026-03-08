@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Crown, Shield, UserCheck, UserX, ToggleLeft, ToggleRight, RefreshCw } from "lucide-react";
+import { Crown, Shield, UserCheck, UserX, ToggleLeft, ToggleRight, RefreshCw, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
