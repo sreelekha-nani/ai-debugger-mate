@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Shield, Play, Square, Users, Clock, Download, RefreshCw, Trophy, Bug,
-  AlertTriangle, Eye, Pencil, Trash2, Plus, Calendar, X, ChevronDown, ChevronUp, Link2, Copy
+  AlertTriangle, Eye, Pencil, Trash2, Plus, Calendar, X, ChevronDown, ChevronUp, Link2, Copy,
+  Share2, ExternalLink, UserCheck, Monitor
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +24,7 @@ interface CompetitionForm {
   duration: number;
   scheduledStart: string;
   scheduledEnd: string;
+  maxParticipants: string;
 }
 
 const defaultForm: CompetitionForm = {
@@ -32,6 +34,7 @@ const defaultForm: CompetitionForm = {
   duration: 900,
   scheduledStart: "",
   scheduledEnd: "",
+  maxParticipants: "",
 };
 
 const Admin = () => {
@@ -45,6 +48,8 @@ const Admin = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [expandedComp, setExpandedComp] = useState<string | null>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState({ url: "", title: "", slug: "" });
 
   const fetchData = useCallback(async () => {
     const [compRes, partRes] = await Promise.all([
@@ -90,6 +95,8 @@ const Admin = () => {
       if (genError) throw genError;
       if (challenge.error) throw new Error(challenge.error);
 
+      const maxP = form.maxParticipants ? parseInt(form.maxParticipants) : null;
+
       const { data: comp, error } = await supabase.from("competitions").insert({
         title: form.title.trim(),
         description: form.description.trim(),
@@ -99,14 +106,13 @@ const Admin = () => {
         status: "scheduled",
         scheduled_start: form.scheduledStart || null,
         scheduled_end: form.scheduledEnd || null,
+        max_participants: maxP,
       }).select().single();
       if (error) throw error;
 
-      const compUrl = `${window.location.origin}/competition/${comp.slug}`;
-      toast({
-        title: "Competition Created!",
-        description: `Share link: ${compUrl}`,
-      });
+      const compUrl = `${window.location.origin}/contest/${comp.slug}`;
+      setGeneratedLink({ url: compUrl, title: comp.title, slug: comp.slug });
+      setLinkDialogOpen(true);
       setForm({ ...defaultForm });
       fetchData();
     } catch (e: any) {
@@ -117,7 +123,7 @@ const Admin = () => {
   };
 
   const copyLink = (slug: string) => {
-    const url = `${window.location.origin}/competition/${slug}`;
+    const url = `${window.location.origin}/contest/${slug}`;
     navigator.clipboard.writeText(url);
     toast({ title: "Link Copied!", description: url });
   };
@@ -131,12 +137,14 @@ const Admin = () => {
       duration: comp.duration,
       scheduledStart: comp.scheduled_start ? new Date(comp.scheduled_start).toISOString().slice(0, 16) : "",
       scheduledEnd: comp.scheduled_end ? new Date(comp.scheduled_end).toISOString().slice(0, 16) : "",
+      maxParticipants: comp.max_participants ? String(comp.max_participants) : "",
     });
     setEditDialogOpen(true);
   };
 
   const saveEdit = async () => {
     if (!editingId) return;
+    const maxP = form.maxParticipants ? parseInt(form.maxParticipants) : null;
     const { error } = await supabase.from("competitions").update({
       title: form.title.trim(),
       description: form.description.trim(),
@@ -144,6 +152,7 @@ const Admin = () => {
       duration: form.duration,
       scheduled_start: form.scheduledStart || null,
       scheduled_end: form.scheduledEnd || null,
+      max_participants: maxP,
     }).eq("id", editingId);
 
     if (error) {
@@ -252,11 +261,11 @@ const Admin = () => {
           ))}
         </div>
 
-        {/* Create Competition */}
+        {/* Competition Management Section */}
         <Card className="border-primary/20">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Plus className="w-4 h-4 text-primary" /> Create New Competition
+              <Plus className="w-4 h-4 text-primary" /> Competition Management — Create & Generate Link
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -281,10 +290,14 @@ const Admin = () => {
               <Label className="text-xs font-medium">Description</Label>
               <Textarea value={form.description} onChange={(e) => updateForm("description", e.target.value)} rows={2} className="resize-none" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">Duration (minutes)</Label>
                 <Input type="number" value={form.duration / 60} onChange={(e) => updateForm("duration", Number(e.target.value) * 60)} className="h-10" min={5} max={120} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Max Participants</Label>
+                <Input type="number" value={form.maxParticipants} onChange={(e) => updateForm("maxParticipants", e.target.value)} className="h-10" min={1} placeholder="Unlimited" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">Start Date & Time</Label>
@@ -300,14 +313,14 @@ const Admin = () => {
                 {loading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
-                    Generating Challenge...
+                    Generating Challenge & Link...
                   </>
                 ) : (
-                  <><Plus className="w-4 h-4 mr-1" /> Create Competition</>
+                  <><Plus className="w-4 h-4 mr-1" /> Create Competition & Generate Link</>
                 )}
               </Button>
               <p className="text-xs text-muted-foreground">
-                A unique competition link will be generated automatically.
+                A unique shareable contest link will be generated automatically.
               </p>
             </div>
           </CardContent>
@@ -332,6 +345,7 @@ const Admin = () => {
                   const compParticipants = participants.filter((p) => p.competition_id === comp.id);
                   const submitted = compParticipants.filter((p) => p.submitted).length;
                   const disqualified = compParticipants.filter((p) => p.disqualified).length;
+                  const activeParts = compParticipants.filter((p) => !p.submitted && !p.disqualified).length;
                   const isExpanded = expandedComp === comp.id;
 
                   return (
@@ -355,20 +369,31 @@ const Admin = () => {
                             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
                               <span className="capitalize">📊 {comp.difficulty}</span>
                               <span>⏱ {comp.duration / 60} min</span>
-                              <span>👥 {compParticipants.length} joined</span>
+                              <span>👥 {compParticipants.length}{comp.max_participants ? `/${comp.max_participants}` : ""} joined</span>
+                              {comp.status === "active" && <span className="text-success">🖥 {activeParts} active</span>}
                               <span>✅ {submitted} submitted</span>
                               {disqualified > 0 && <span className="text-destructive">🚫 {disqualified} DQ</span>}
                               {comp.scheduled_start && <span>📅 {formatDateTime(comp.scheduled_start)}</span>}
                             </div>
-                            {/* Competition link */}
+                            {/* Shareable Competition link */}
                             {comp.slug && (
-                              <div className="flex items-center gap-2 mt-2">
-                                <Link2 className="w-3.5 h-3.5 text-primary" />
-                                <code className="text-xs text-primary bg-primary/5 px-2 py-0.5 rounded">
-                                  /competition/{comp.slug}
+                              <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-primary/5 border border-primary/10">
+                                <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                                <code className="text-xs text-primary truncate">
+                                  {window.location.origin}/contest/{comp.slug}
                                 </code>
-                                <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => copyLink(comp.slug)}>
+                                <Button variant="ghost" size="sm" className="h-6 px-2 shrink-0" onClick={() => copyLink(comp.slug)}>
                                   <Copy className="w-3 h-3" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-6 px-2 shrink-0" onClick={() => {
+                                  setGeneratedLink({
+                                    url: `${window.location.origin}/contest/${comp.slug}`,
+                                    title: comp.title,
+                                    slug: comp.slug,
+                                  });
+                                  setLinkDialogOpen(true);
+                                }}>
+                                  <Share2 className="w-3 h-3" />
                                 </Button>
                               </div>
                             )}
@@ -405,9 +430,37 @@ const Admin = () => {
                         </div>
                       </div>
 
-                      {/* Expanded participants + leaderboard (admin only) */}
+                      {/* Expanded: Live monitoring + participants + leaderboard */}
                       {isExpanded && (
                         <div className="border-t border-border/30 bg-secondary/10">
+                          {/* Live monitoring summary */}
+                          {comp.status === "active" && (
+                            <div className="p-4 border-b border-border/20 bg-success/5">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Monitor className="w-4 h-4 text-success" />
+                                <span className="text-sm font-bold">Live Monitoring</span>
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="p-2 rounded-lg bg-card border border-border/30 text-center">
+                                  <p className="text-lg font-bold">{compParticipants.length}</p>
+                                  <p className="text-[10px] text-muted-foreground">Joined</p>
+                                </div>
+                                <div className="p-2 rounded-lg bg-card border border-border/30 text-center">
+                                  <p className="text-lg font-bold text-success">{activeParts}</p>
+                                  <p className="text-[10px] text-muted-foreground">Active Now</p>
+                                </div>
+                                <div className="p-2 rounded-lg bg-card border border-border/30 text-center">
+                                  <p className="text-lg font-bold text-primary">{submitted}</p>
+                                  <p className="text-[10px] text-muted-foreground">Submitted</p>
+                                </div>
+                                <div className="p-2 rounded-lg bg-card border border-border/30 text-center">
+                                  <p className="text-lg font-bold">{compParticipants.filter(p => p.webcam_active).length}</p>
+                                  <p className="text-[10px] text-muted-foreground">Camera On</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           {compParticipants.length === 0 ? (
                             <div className="p-6 text-center text-sm text-muted-foreground">No participants yet.</div>
                           ) : (
@@ -473,6 +526,52 @@ const Admin = () => {
         </Card>
       </div>
 
+      {/* Generated Link Dialog */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-primary" /> Competition Link Generated!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center mx-auto mb-3">
+                <Link2 className="w-7 h-7 text-success" />
+              </div>
+              <p className="font-bold text-lg">{generatedLink.title}</p>
+              <p className="text-xs text-muted-foreground mt-1">Share this link with participants to join</p>
+            </div>
+            <div className="p-3 rounded-xl bg-muted/50 border border-border flex items-center gap-2">
+              <code className="text-sm text-primary flex-1 truncate">{generatedLink.url}</code>
+              <Button size="sm" variant="outline" className="shrink-0" onClick={() => {
+                navigator.clipboard.writeText(generatedLink.url);
+                toast({ title: "Copied!" });
+              }}>
+                <Copy className="w-4 h-4 mr-1" /> Copy
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="w-full" onClick={() => {
+                navigator.clipboard.writeText(generatedLink.url);
+                toast({ title: "Copied!" });
+              }}>
+                <Copy className="w-4 h-4 mr-1" /> Copy Link
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => window.open(generatedLink.url, "_blank")}>
+                <ExternalLink className="w-4 h-4 mr-1" /> Preview
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground text-center">
+              Participants must log in before they can join. Camera and fullscreen will be required.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setLinkDialogOpen(false)} className="w-full">Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-lg">
@@ -490,7 +589,7 @@ const Admin = () => {
               <Label className="text-xs">Description</Label>
               <Textarea value={form.description} onChange={(e) => updateForm("description", e.target.value)} rows={2} className="resize-none" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">Difficulty</Label>
                 <Select value={form.difficulty} onValueChange={(v) => updateForm("difficulty", v)}>
@@ -505,6 +604,10 @@ const Admin = () => {
               <div className="space-y-1.5">
                 <Label className="text-xs">Duration (min)</Label>
                 <Input type="number" value={form.duration / 60} onChange={(e) => updateForm("duration", Number(e.target.value) * 60)} className="h-10" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Max Participants</Label>
+                <Input type="number" value={form.maxParticipants} onChange={(e) => updateForm("maxParticipants", e.target.value)} className="h-10" placeholder="Unlimited" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
