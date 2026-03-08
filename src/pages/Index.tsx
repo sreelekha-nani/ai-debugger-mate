@@ -139,7 +139,7 @@ const Index = () => {
             </Badge>
             <h2 className="text-3xl md:text-5xl font-bold mb-4">What is Bug Busters?</h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              A competitive debugging platform where participants race to fix AI-generated buggy Python code under time pressure.
+              A competitive debugging platform where participants race to fix buggy Python code under time pressure.
             </p>
           </div>
 
