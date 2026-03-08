@@ -72,6 +72,7 @@ export type Database = {
           team: string | null
           time_spent: number | null
           total_bugs: number | null
+          user_id: string | null
           warning_details: Json | null
           warnings: number
           webcam_active: boolean
@@ -91,6 +92,7 @@ export type Database = {
           team?: string | null
           time_spent?: number | null
           total_bugs?: number | null
+          user_id?: string | null
           warning_details?: Json | null
           warnings?: number
           webcam_active?: boolean
@@ -110,6 +112,7 @@ export type Database = {
           team?: string | null
           time_spent?: number | null
           total_bugs?: number | null
+          user_id?: string | null
           warning_details?: Json | null
           warnings?: number
           webcam_active?: boolean
@@ -123,6 +126,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          college_name: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          college_name?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          college_name?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
       }
     }
     Views: {
