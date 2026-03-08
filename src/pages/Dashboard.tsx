@@ -169,6 +169,7 @@ const Dashboard = () => {
                 <Shield className="w-4 h-4 mr-1" /> Admin
               </Button>
             )}
+            {!isAdmin && <AdminRequestButton />}
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-1" /> Sign Out
             </Button>
