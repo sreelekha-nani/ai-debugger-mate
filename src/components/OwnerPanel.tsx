@@ -35,6 +35,8 @@ const OwnerPanel = () => {
   const [requests, setRequests] = useState<AdminRequest[]>([]);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteLoading, setInviteLoading] = useState(false);
 
   const fetchData = async () => {
     // Fetch platform settings
