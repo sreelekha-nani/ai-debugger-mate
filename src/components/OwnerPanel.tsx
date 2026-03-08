@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Crown, Shield, UserCheck, UserX, ToggleLeft, ToggleRight, RefreshCw } from "lucide-react";
+import { Crown, Shield, UserCheck, UserX, ToggleLeft, ToggleRight, RefreshCw, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +35,8 @@ const OwnerPanel = () => {
   const [requests, setRequests] = useState<AdminRequest[]>([]);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteLoading, setInviteLoading] = useState(false);
 
   const fetchData = async () => {
     // Fetch platform settings
@@ -156,6 +159,51 @@ const OwnerPanel = () => {
     }
   };
 
+  const inviteAdmin = async () => {
+    if (!inviteEmail.trim()) return;
+    setInviteLoading(true);
+    
+    // Look up user by email
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("email", inviteEmail.trim().toLowerCase())
+      .single();
+
+    if (!profile) {
+      toast({ title: "User not found", description: "No registered user with that email.", variant: "destructive" });
+      setInviteLoading(false);
+      return;
+    }
+
+    // Check if already admin
+    const { data: existingRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", profile.id)
+      .in("role", ["admin", "owner"] as any);
+
+    if (existingRole && existingRole.length > 0) {
+      toast({ title: "Already an admin", description: `${profile.full_name} already has a role.`, variant: "destructive" });
+      setInviteLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.from("user_roles").insert({
+      user_id: profile.id,
+      role: "admin",
+    } as any);
+
+    if (error) {
+      toast({ title: "Failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Admin added!", description: `${profile.full_name} is now an admin.` });
+      setInviteEmail("");
+      fetchData();
+    }
+    setInviteLoading(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Owner Badge */}
@@ -239,6 +287,37 @@ const OwnerPanel = () => {
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Invite Admin by Email */}
+      <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <UserPlus className="w-4 h-4 text-primary" /> Invite Admin by Email
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end gap-3">
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs font-medium">Registered User Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder="user@example.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && inviteAdmin()}
+                  className="pl-9 h-10"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">The user must already have a registered account.</p>
+            </div>
+            <Button onClick={inviteAdmin} disabled={inviteLoading || !inviteEmail.trim()} className="h-10">
+              <UserPlus className="w-4 h-4 mr-1" /> {inviteLoading ? "Adding..." : "Add as Admin"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
