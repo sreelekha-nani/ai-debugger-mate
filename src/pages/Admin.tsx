@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Shield, Play, Square, Users, Clock, Download, RefreshCw, Trophy, Bug,
   AlertTriangle, Eye, Pencil, Trash2, Plus, Calendar, X, ChevronDown, ChevronUp, Link2, Copy,
-  Share2, ExternalLink, UserCheck, Monitor
+  Share2, ExternalLink, UserCheck, Monitor, Crown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +14,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdmin } from "@/hooks/useAdmin";
+import OwnerPanel from "@/components/OwnerPanel";
 
 interface CompetitionForm {
   title: string;
