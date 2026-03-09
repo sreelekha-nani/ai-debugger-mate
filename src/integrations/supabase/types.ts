@@ -191,8 +191,10 @@ export type Database = {
         Row: {
           accuracy: number | null
           bugs_fixed: number | null
+          challenge_title: string | null
           difficulty: string
           id: string
+          language: string
           score: number | null
           submitted_at: string
           time_spent: number | null
@@ -202,8 +204,10 @@ export type Database = {
         Insert: {
           accuracy?: number | null
           bugs_fixed?: number | null
+          challenge_title?: string | null
           difficulty?: string
           id?: string
+          language?: string
           score?: number | null
           submitted_at?: string
           time_spent?: number | null
@@ -213,8 +217,10 @@ export type Database = {
         Update: {
           accuracy?: number | null
           bugs_fixed?: number | null
+          challenge_title?: string | null
           difficulty?: string
           id?: string
+          language?: string
           score?: number | null
           submitted_at?: string
           time_spent?: number | null
