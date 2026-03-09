@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Brain, ArrowLeft, BarChart3, Target, Flame, TrendingUp, Trophy } from "lucide-react";
+import { Brain, ArrowLeft, BarChart3, Target, Flame, TrendingUp, Trophy, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line, Area, AreaChart } from "recharts";
 
 interface QuizSubmission {
   id: string;
@@ -131,6 +131,49 @@ const QuizStats = () => {
     return { current, longest };
   }, [submissions]);
 
+  const [trendRange, setTrendRange] = useState<"7d" | "30d" | "all">("30d");
+
+  const trendData = useMemo(() => {
+    if (!submissions.length) return [];
+    const now = new Date();
+    const filtered = trendRange === "all" ? submissions : submissions.filter((s) => {
+      const d = new Date(s.submitted_at);
+      const diff = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+      return trendRange === "7d" ? diff <= 7 : diff <= 30;
+    });
+
+    const dayMap: Record<string, { total: number; correct: number }> = {};
+    filtered.forEach((s) => {
+      const day = new Date(s.submitted_at).toISOString().slice(0, 10);
+      if (!dayMap[day]) dayMap[day] = { total: 0, correct: 0 };
+      dayMap[day].total++;
+      if (s.is_correct) dayMap[day].correct++;
+    });
+
+    // Fill gaps for continuous line
+    const sortedDays = Object.keys(dayMap).sort();
+    if (!sortedDays.length) return [];
+    const start = new Date(sortedDays[0]);
+    const end = new Date(sortedDays[sortedDays.length - 1]);
+    const result: { date: string; label: string; total: number; correct: number; accuracy: number; cumAccuracy: number }[] = [];
+    let cumTotal = 0, cumCorrect = 0;
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      const entry = dayMap[key] || { total: 0, correct: 0 };
+      cumTotal += entry.total;
+      cumCorrect += entry.correct;
+      result.push({
+        date: key,
+        label: `${d.getMonth() + 1}/${d.getDate()}`,
+        total: entry.total,
+        correct: entry.correct,
+        accuracy: entry.total ? Math.round((entry.correct / entry.total) * 100) : 0,
+        cumAccuracy: cumTotal ? Math.round((cumCorrect / cumTotal) * 100) : 0,
+      });
+    }
+    return result;
+  }, [submissions, trendRange]);
+
   const pieData = byLanguage.map((l) => ({ name: l.name, value: l.total }));
 
   return (
@@ -195,12 +238,89 @@ const QuizStats = () => {
               </Card>
             </div>
 
-            <Tabs defaultValue="language" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-3">
+            <Tabs defaultValue="trends" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="trends">Trends</TabsTrigger>
                 <TabsTrigger value="language">By Language</TabsTrigger>
                 <TabsTrigger value="difficulty">By Difficulty</TabsTrigger>
                 <TabsTrigger value="type">By Type</TabsTrigger>
               </TabsList>
+
+              {/* Trends */}
+              <TabsContent value="trends" className="space-y-4">
+                <Card>
+                  <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Calendar className="w-4 h-4" /> Daily Performance
+                    </CardTitle>
+                    <div className="flex gap-1">
+                      {(["7d", "30d", "all"] as const).map((r) => (
+                        <Button
+                          key={r}
+                          variant={trendRange === r ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 text-xs px-2"
+                          onClick={() => setTrendRange(r)}
+                        >
+                          {r === "7d" ? "7 Days" : r === "30d" ? "30 Days" : "All Time"}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {trendData.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8 text-sm">No data for this period</p>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={280}>
+                        <AreaChart data={trendData}>
+                          <defs>
+                            <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(217, 91%, 50%)" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="hsl(217, 91%, 50%)" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="gradCorrect" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(142, 76%, 46%)" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="hsl(142, 76%, 46%)" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(222, 15%, 88%)" />
+                          <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 11 }} />
+                          <Tooltip />
+                          <Legend />
+                          <Area type="monotone" dataKey="total" name="Total" stroke="hsl(217, 91%, 50%)" fill="url(#gradTotal)" strokeWidth={2} />
+                          <Area type="monotone" dataKey="correct" name="Correct" stroke="hsl(142, 76%, 46%)" fill="url(#gradCorrect)" strokeWidth={2} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" /> Accuracy Over Time
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {trendData.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8 text-sm">No data for this period</p>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={trendData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(222, 15%, 88%)" />
+                          <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                          <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                          <Tooltip formatter={(v: number) => `${v}%`} />
+                          <Legend />
+                          <Line type="monotone" dataKey="accuracy" name="Daily Accuracy" stroke="hsl(38, 92%, 50%)" strokeWidth={2} dot={{ r: 3 }} />
+                          <Line type="monotone" dataKey="cumAccuracy" name="Cumulative" stroke="hsl(199, 89%, 48%)" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
               {/* By Language */}
               <TabsContent value="language" className="space-y-4">
