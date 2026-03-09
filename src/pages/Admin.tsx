@@ -454,6 +454,11 @@ const Admin = () => {
                                 <Square className="w-3.5 h-3.5 mr-1" /> End
                               </Button>
                             )}
+                            {comp.status === "ended" && comp.slug && (
+                              <Button size="sm" variant="outline" onClick={() => navigate(`/competition/${comp.slug}/results`)} className="border-primary/30 text-primary">
+                                <Trophy className="w-3.5 h-3.5 mr-1" /> Results
+                              </Button>
+                            )}
                             <Button size="sm" variant="outline" onClick={() => downloadResults(comp.id, "csv")}>
                               <Download className="w-3.5 h-3.5" />
                             </Button>
