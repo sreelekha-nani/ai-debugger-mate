@@ -21,12 +21,20 @@ interface Challenge {
   hints?: string[];
 }
 
-const PRACTICE_DURATION = 600; // 10 minutes
+const PRACTICE_DURATION = 600;
+
+const LANGUAGES = [
+  { value: "python", label: "🐍 Python", monaco: "python", ext: "py" },
+  { value: "java", label: "☕ Java", monaco: "java", ext: "java" },
+  { value: "c", label: "⚙️ C", monaco: "c", ext: "c" },
+  { value: "cpp", label: "🔧 C++", monaco: "cpp", ext: "cpp" },
+];
 
 const Practice = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [difficulty, setDifficulty] = useState("medium");
+  const [language, setLanguage] = useState("python");
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [code, setCode] = useState("");
   const [timeLeft, setTimeLeft] = useState(PRACTICE_DURATION);
@@ -35,6 +43,7 @@ const Practice = () => {
   const [showHints, setShowHints] = useState(false);
   const [started, setStarted] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [previousTitles, setPreviousTitles] = useState<string[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const generateChallenge = async () => {
