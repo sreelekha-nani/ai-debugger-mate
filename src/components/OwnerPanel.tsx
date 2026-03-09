@@ -113,6 +113,75 @@ const OwnerPanel = () => {
     }
   };
 
+  const grantAdminAccess = async () => {
+    const email = grantEmail.trim().toLowerCase();
+    
+    if (!email) {
+      toast({ title: "Email required", description: "Please enter an email address.", variant: "destructive" });
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
+
+    setGrantLoading(true);
+
+    // Look up user by email
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("email", email)
+      .single();
+
+    if (!profile) {
+      toast({ 
+        title: "User not found", 
+        description: "This email is not registered on the platform.", 
+        variant: "destructive" 
+      });
+      setGrantLoading(false);
+      return;
+    }
+
+    // Check if already has a role
+    const { data: existingRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", profile.id);
+
+    if (existingRole && existingRole.length > 0) {
+      const role = (existingRole[0] as any).role;
+      toast({ 
+        title: "Already has role", 
+        description: `${profile.full_name} already has the ${role} role.`, 
+        variant: "destructive" 
+      });
+      setGrantLoading(false);
+      return;
+    }
+
+    // Grant admin role
+    const { error } = await supabase
+      .from("user_roles")
+      .insert({ user_id: profile.id, role: "admin" });
+
+    if (error) {
+      toast({ title: "Failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ 
+        title: "Admin access granted!", 
+        description: `${profile.full_name} is now an admin. They will see the Admin Panel on their next login.` 
+      });
+      setGrantEmail("");
+      fetchData();
+    }
+    setGrantLoading(false);
+  };
+
   // Filter and sort users
   const filteredUsers = users
     .filter((u) => {
