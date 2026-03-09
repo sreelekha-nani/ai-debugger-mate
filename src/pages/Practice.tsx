@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bug, Clock, Send, Eye, Lightbulb, Zap, RotateCcw, Trophy } from "lucide-react";
+import { Bug, Clock, Send, Eye, Lightbulb, Zap, RotateCcw, Trophy, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -248,15 +248,20 @@ const Practice = () => {
       {/* Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold flex items-center gap-2">
-              <Bug className="w-5 h-5 text-primary" /> {challenge.title}
-              <Badge variant="outline" className="text-xs">Practice</Badge>
-            </h1>
-            <div className="flex gap-2 text-xs">
-              <Badge variant="outline" className="text-xs">🐍 Python</Badge>
-              <Badge variant="outline" className="text-xs capitalize">{difficulty}</Badge>
-              <Badge variant="outline" className="text-xs">{challenge.bugs.length} bugs</Badge>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/dashboard")}>
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div>
+              <h1 className="text-lg font-bold flex items-center gap-2">
+                <Bug className="w-5 h-5 text-primary" /> {challenge.title}
+                <Badge variant="outline" className="text-xs">Practice</Badge>
+              </h1>
+              <div className="flex gap-2 text-xs">
+                <Badge variant="outline" className="text-xs">🐍 Python</Badge>
+                <Badge variant="outline" className="text-xs capitalize">{difficulty}</Badge>
+                <Badge variant="outline" className="text-xs">{challenge.bugs.length} bugs</Badge>
+              </div>
             </div>
           </div>
           <div className={`flex items-center gap-2 font-mono text-2xl font-bold ${timeColor}`}>
