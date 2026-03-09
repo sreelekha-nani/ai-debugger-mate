@@ -18,6 +18,7 @@ const Dashboard = () => {
   const [previousResults, setPreviousResults] = useState<any[]>([]);
   const [practiceStats, setPracticeStats] = useState({ count: 0, totalScore: 0, avgAccuracy: 0 });
   const [quizStats, setQuizStats] = useState({ total: 0, correct: 0, accuracy: 0 });
+  const [quizByLang, setQuizByLang] = useState<Record<string, { total: number; correct: number; accuracy: number }>>({});
   const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
 
   useEffect(() => {
