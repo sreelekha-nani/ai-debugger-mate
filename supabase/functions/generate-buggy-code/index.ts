@@ -5,26 +5,71 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const LANGUAGE_CONFIG: Record<string, { name: string; complexity: Record<string, string> }> = {
+  python: {
+    name: "Python",
+    complexity: {
+      easy: "simple (basic loops, conditionals, functions, list operations)",
+      medium: "moderate (lists, dictionaries, string manipulation, simple algorithms, list comprehensions)",
+      hard: "complex (recursion, OOP, file handling, advanced algorithms, decorators, generators)",
+    },
+  },
+  java: {
+    name: "Java",
+    complexity: {
+      easy: "simple (basic loops, conditionals, methods, arrays)",
+      medium: "moderate (ArrayLists, HashMaps, string manipulation, simple algorithms, interfaces)",
+      hard: "complex (recursion, OOP inheritance, generics, streams, exception handling)",
+    },
+  },
+  c: {
+    name: "C",
+    complexity: {
+      easy: "simple (basic loops, conditionals, functions, arrays)",
+      medium: "moderate (pointers, dynamic memory allocation, structs, string manipulation)",
+      hard: "complex (pointer arithmetic, linked lists, file I/O, memory management, bitwise operations)",
+    },
+  },
+  cpp: {
+    name: "C++",
+    complexity: {
+      easy: "simple (basic loops, conditionals, functions, vectors)",
+      medium: "moderate (STL containers, references, classes, string manipulation, iterators)",
+      hard: "complex (templates, inheritance, smart pointers, operator overloading, RAII)",
+    },
+  },
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { language, difficulty } = await req.json();
+    const { language = "python", difficulty = "medium", previousTitles = [] } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const langKey = language.toLowerCase().replace("++", "pp");
+    const langConfig = LANGUAGE_CONFIG[langKey] || LANGUAGE_CONFIG.python;
     const bugCount = difficulty === "easy" ? 2 : difficulty === "medium" ? 3 : 5;
-    const complexity = difficulty === "easy" ? "simple (basic loops, conditionals, functions)" : difficulty === "medium" ? "moderate (lists, dictionaries, string manipulation, simple algorithms)" : "complex (recursion, OOP, file handling, advanced algorithms)";
+    const complexity = langConfig.complexity[difficulty] || langConfig.complexity.medium;
+
+    const avoidList = previousTitles.length > 0
+      ? `\n\nIMPORTANT: Do NOT generate challenges similar to these previously solved ones:\n${previousTitles.map((t: string) => `- "${t}"`).join("\n")}\nCreate something completely different in topic, algorithm, and structure.`
+      : "";
 
     const systemPrompt = `You are a code challenge generator for a debugging competition. Generate buggy code that students must fix.
 
 RULES:
-- Generate a small, self-contained ${language} program
+- Generate a small, self-contained ${langConfig.name} program
 - The program should be ${complexity}
 - Introduce exactly ${bugCount} bugs (mix of syntax errors, logical errors, off-by-one errors, wrong operators, missing statements)
 - Each bug should be fixable independently
 - The program should be 15-40 lines long
 - Include a clear description of what the program SHOULD do
+- Use proper ${langConfig.name} idioms and conventions
+${langKey === "c" || langKey === "cpp" ? "- Include necessary #include headers\n- Include a main() function" : ""}
+${langKey === "java" ? "- Include a proper class with main method" : ""}
+${avoidList}
 
 You MUST respond using the generate_challenge tool.`;
 
@@ -38,7 +83,7 @@ You MUST respond using the generate_challenge tool.`;
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Generate a ${difficulty} ${language} debugging challenge with exactly ${bugCount} bugs.` },
+          { role: "user", content: `Generate a ${difficulty} ${langConfig.name} debugging challenge with exactly ${bugCount} bugs. Be creative and unique. Seed: ${Date.now()}-${Math.random().toString(36).slice(2)}` },
         ],
         tools: [
           {
@@ -53,6 +98,7 @@ You MUST respond using the generate_challenge tool.`;
                   description: { type: "string", description: "Clear description of what the program should do when working correctly" },
                   buggyCode: { type: "string", description: "The buggy code that students need to fix" },
                   correctCode: { type: "string", description: "The correct working version of the code" },
+                  language: { type: "string", description: "The programming language used" },
                   bugs: {
                     type: "array",
                     items: {
@@ -84,7 +130,7 @@ You MUST respond using the generate_challenge tool.`;
                     description: "Optional hints for each bug",
                   },
                 },
-                required: ["title", "description", "buggyCode", "correctCode", "bugs", "testCases"],
+                required: ["title", "description", "buggyCode", "correctCode", "language", "bugs", "testCases"],
                 additionalProperties: false,
               },
             },
@@ -97,14 +143,12 @@ You MUST respond using the generate_challenge tool.`;
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limited. Please try again in a moment." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const t = await response.text();
@@ -124,8 +168,7 @@ You MUST respond using the generate_challenge tool.`;
   } catch (e) {
     console.error("generate-buggy-code error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

@@ -21,12 +21,20 @@ interface Challenge {
   hints?: string[];
 }
 
-const PRACTICE_DURATION = 600; // 10 minutes
+const PRACTICE_DURATION = 600;
+
+const LANGUAGES = [
+  { value: "python", label: "🐍 Python", monaco: "python", ext: "py" },
+  { value: "java", label: "☕ Java", monaco: "java", ext: "java" },
+  { value: "c", label: "⚙️ C", monaco: "c", ext: "c" },
+  { value: "cpp", label: "🔧 C++", monaco: "cpp", ext: "cpp" },
+];
 
 const Practice = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [difficulty, setDifficulty] = useState("medium");
+  const [language, setLanguage] = useState("python");
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [code, setCode] = useState("");
   const [timeLeft, setTimeLeft] = useState(PRACTICE_DURATION);
@@ -35,7 +43,23 @@ const Practice = () => {
   const [showHints, setShowHints] = useState(false);
   const [started, setStarted] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [previousTitles, setPreviousTitles] = useState<string[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load previous titles to avoid repeats
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("practice_submissions")
+      .select("challenge_title")
+      .eq("user_id", user.id)
+      .not("challenge_title", "is", null)
+      .order("submitted_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (data) setPreviousTitles(data.map((d: any) => d.challenge_title).filter(Boolean));
+      });
+  }, [user]);
 
   const generateChallenge = async () => {
     setLoading(true);
@@ -43,7 +67,7 @@ const Practice = () => {
     setShowHints(false);
     try {
       const { data, error } = await supabase.functions.invoke("generate-buggy-code", {
-        body: { language: "python", difficulty },
+        body: { language, difficulty, previousTitles },
       });
       if (error) throw error;
       if (data.error) throw new Error(data.error);
@@ -107,7 +131,10 @@ const Practice = () => {
           total_bugs: data.totalBugs,
           accuracy: data.accuracy,
           time_spent: timeSpent,
+          language,
+          challenge_title: challenge.title,
         });
+        setPreviousTitles((prev) => [challenge.title, ...prev].slice(0, 20));
       }
 
       setResult({ ...data, score, timeSpent });
@@ -116,7 +143,7 @@ const Practice = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [challenge, code, timeLeft, submitting, user, difficulty]);
+  }, [challenge, code, timeLeft, submitting, user, difficulty, language]);
 
   const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
   const timePercent = (timeLeft / PRACTICE_DURATION) * 100;
@@ -161,6 +188,18 @@ const Practice = () => {
               </div>
 
               <div className="space-y-2">
+                <label className="text-sm font-medium">Programming Language</label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((l) => (
+                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Difficulty Level</label>
                 <Select value={difficulty} onValueChange={setDifficulty}>
                   <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
@@ -174,7 +213,7 @@ const Practice = () => {
 
               <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 text-sm text-muted-foreground space-y-1">
                 <p>⏱ 10 minute time limit</p>
-                <p>🐍 Python debugging challenge</p>
+                <p>{LANGUAGES.find((l) => l.value === language)?.label} debugging challenge</p>
                 <p>📊 Results visible on practice leaderboard</p>
               </div>
 
@@ -258,7 +297,7 @@ const Practice = () => {
                 <Badge variant="outline" className="text-xs">Practice</Badge>
               </h1>
               <div className="flex gap-2 text-xs">
-                <Badge variant="outline" className="text-xs">🐍 Python</Badge>
+                <Badge variant="outline" className="text-xs">{LANGUAGES.find((l) => l.value === language)?.label}</Badge>
                 <Badge variant="outline" className="text-xs capitalize">{difficulty}</Badge>
                 <Badge variant="outline" className="text-xs">{challenge.bugs.length} bugs</Badge>
               </div>
@@ -332,13 +371,13 @@ const Practice = () => {
                     <div className="w-3 h-3 rounded-full bg-warning/70" />
                     <div className="w-3 h-3 rounded-full bg-success/70" />
                   </div>
-                  <span className="text-sm font-mono text-muted-foreground">practice.py</span>
+                  <span className="text-sm font-mono text-muted-foreground">practice.{LANGUAGES.find((l) => l.value === language)?.ext}</span>
                 </div>
-                <Badge variant="secondary" className="text-xs font-mono">Python</Badge>
+                <Badge variant="secondary" className="text-xs font-mono">{LANGUAGES.find((l) => l.value === language)?.label}</Badge>
               </div>
             </CardHeader>
             <CardContent className="p-0 h-[calc(100%-44px)]">
-              <MonacoEditor value={code} onChange={setCode} language="python" />
+              <MonacoEditor value={code} onChange={setCode} language={LANGUAGES.find((l) => l.value === language)?.monaco || "python"} />
             </CardContent>
           </Card>
         </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bug, Clock, AlertTriangle, Send, Eye, Lightbulb, ShieldAlert } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,13 @@ interface Challenge {
   hints?: string[];
 }
 
+const LANGUAGES = [
+  { value: "python", label: "🐍 Python", monaco: "python", ext: "py" },
+  { value: "java", label: "☕ Java", monaco: "java", ext: "java" },
+  { value: "c", label: "⚙️ C", monaco: "c", ext: "c" },
+  { value: "cpp", label: "🔧 C++", monaco: "cpp", ext: "cpp" },
+];
+
 const Arena = () => {
   const navigate = useNavigate();
   const [competition, setCompetition] = useState<any>(null);
@@ -32,6 +40,7 @@ const Arena = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showHints, setShowHints] = useState(false);
+  const [editorLanguage, setEditorLanguage] = useState("python");
   const [proctoringReady, setProctoringReady] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -249,7 +258,7 @@ const Arena = () => {
                 <Bug className="w-5 h-5 text-primary" /> {challenge.title}
               </h1>
               <div className="flex gap-2 text-xs">
-                <Badge variant="outline" className="text-xs">🐍 Python</Badge>
+                <Badge variant="outline" className="text-xs">{LANGUAGES.find((l) => l.value === editorLanguage)?.label}</Badge>
                 <Badge variant="outline" className="text-xs capitalize">{competition?.difficulty}</Badge>
                 <Badge variant="outline" className="text-xs">{challenge.bugs.length} bugs</Badge>
               </div>
@@ -337,13 +346,22 @@ const Arena = () => {
                     <div className="w-3 h-3 rounded-full bg-warning/70" />
                     <div className="w-3 h-3 rounded-full bg-success/70" />
                   </div>
-                  <span className="text-sm font-mono text-muted-foreground">challenge.py</span>
+                  <span className="text-sm font-mono text-muted-foreground">challenge.{LANGUAGES.find((l) => l.value === editorLanguage)?.ext}</span>
                 </div>
-                <Badge variant="secondary" className="text-xs font-mono">Python</Badge>
+                <Select value={editorLanguage} onValueChange={setEditorLanguage}>
+                  <SelectTrigger className="w-[140px] h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((l) => (
+                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardHeader>
             <CardContent className="p-0 h-[calc(100%-44px)]">
-              <MonacoEditor value={code} onChange={setCode} language="python" />
+              <MonacoEditor value={code} onChange={setCode} language={LANGUAGES.find((l) => l.value === editorLanguage)?.monaco || "python"} />
             </CardContent>
           </Card>
         </div>
