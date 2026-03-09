@@ -206,7 +206,7 @@ const Dashboard = () => {
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
+      <div className="max-w-[1600px] mx-auto px-6 py-8 space-y-6">
         {/* Welcome */}
         <Card className={`bg-gradient-to-br from-card ${isOwner ? "to-warning/5 border-warning/30" : "to-primary/5 border-primary/20"}`}>
           <CardContent className="pt-8 pb-6 px-8">
