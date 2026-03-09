@@ -676,7 +676,7 @@ const Admin = () => {
 
       {/* Generated Link Dialog */}
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Share2 className="w-5 h-5 text-primary" /> Competition Link Generated!
