@@ -738,9 +738,9 @@ const Admin = () => {
                 <Select value={form.difficulty} onValueChange={(v) => updateForm("difficulty", v)}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
+                    <SelectItem value="easy">🟢 Easy</SelectItem>
+                    <SelectItem value="medium">🟡 Moderate</SelectItem>
+                    <SelectItem value="hard">🔴 Hard</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
