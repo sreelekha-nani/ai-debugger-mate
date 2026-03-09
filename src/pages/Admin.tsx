@@ -707,17 +707,12 @@ const Admin = () => {
             >
               <Copy className="w-4 h-4 mr-2" /> Copy Link
             </Button>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="w-full" onClick={() => {
-                navigator.clipboard.writeText(generatedLink.url);
-                toast({ title: "Copied!" });
-              }}>
-                <Copy className="w-4 h-4 mr-1" /> Copy Link
-              </Button>
-              <Button variant="outline" className="w-full" onClick={() => window.open(generatedLink.url, "_blank")}>
-                <ExternalLink className="w-4 h-4 mr-1" /> Preview
-              </Button>
-            </div>
+            <Button variant="outline" className="w-full" onClick={() => window.open(generatedLink.url, "_blank")}>
+              <ExternalLink className="w-4 h-4 mr-2" /> Open Preview
+            </Button>
+            <p className="text-[11px] text-muted-foreground text-center">
+              Participants must log in before they can join. Camera and fullscreen will be required.
+            </p>
             <p className="text-[11px] text-muted-foreground text-center">
               Participants must log in before they can join. Camera and fullscreen will be required.
             </p>
