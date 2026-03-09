@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bug, Brain, ChevronRight, RotateCcw, CheckCircle2, XCircle, Code2, Sparkles, ArrowLeft } from "lucide-react";
+import { Bug, Brain, ChevronRight, RotateCcw, CheckCircle2, XCircle, Code2, Sparkles, ArrowLeft, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -92,6 +92,9 @@ const Quiz = () => {
               </div>
               <span className="font-bold text-lg">Quiz Mode</span>
             </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/quiz/stats")}>
+              <BarChart3 className="w-4 h-4 mr-1" /> Stats
+            </Button>
           </div>
         </nav>
 
@@ -148,7 +151,10 @@ const Quiz = () => {
                 {stats.correct}/{stats.total} correct
               </Badge>
             </div>
-        </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/quiz/stats")}>
+              <BarChart3 className="w-4 h-4 mr-1" /> Stats
+            </Button>
+          </div>
       </nav>
 
       <div className="container mx-auto px-4 py-6 max-w-3xl space-y-5">
