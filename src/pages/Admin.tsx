@@ -270,7 +270,7 @@ const Admin = () => {
           <Tabs defaultValue="competitions" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 max-w-md">
               <TabsTrigger value="competitions">🏆 Competitions</TabsTrigger>
-              <TabsTrigger value="owner">👑 Owner Panel</TabsTrigger>
+              <TabsTrigger value="owner">👤 User Management</TabsTrigger>
             </TabsList>
             <TabsContent value="owner">
               <OwnerPanel />
