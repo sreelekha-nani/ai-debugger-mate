@@ -236,6 +236,12 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground mt-1">Solve debugging challenges</p>
             </CardContent>
           </Card>
+          <Card className="border-accent/20 hover:border-accent/40 transition-all cursor-pointer group" onClick={() => navigate("/quiz")}>
+            <CardContent className="pt-6 pb-5 text-center">
+              <Brain className="w-8 h-8 text-accent mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              <h3 className="font-bold">Interview Quiz</h3>
+              <p className="text-xs text-muted-foreground mt-1">MCQ coding questions</p>
+            </CardContent>
           <Card className="border-accent/20 hover:border-accent/40 transition-all cursor-pointer group" onClick={() => navigate("/global-leaderboard")}>
             <CardContent className="pt-6 pb-5 text-center">
               <Globe className="w-8 h-8 text-accent mx-auto mb-2 group-hover:scale-110 transition-transform" />
