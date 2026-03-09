@@ -296,6 +296,44 @@ const OwnerPanel = () => {
         </Card>
       </div>
 
+      {/* Grant Admin Access */}
+      <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <UserPlus className="w-4 h-4 text-primary" /> Grant Admin Access
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end gap-3">
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs font-medium">Enter Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder="user@email.com"
+                  value={grantEmail}
+                  onChange={(e) => setGrantEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && grantAdminAccess()}
+                  className="pl-9 h-10"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The user must already have a registered account on Bug Busters.
+              </p>
+            </div>
+            <Button 
+              onClick={grantAdminAccess} 
+              disabled={grantLoading || !grantEmail.trim()} 
+              className="h-10"
+            >
+              <UserPlus className="w-4 h-4 mr-1" /> 
+              {grantLoading ? "Granting..." : "Make Admin"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* User Management Table */}
       <Card className="border-border/50">
         <CardHeader className="pb-3">
