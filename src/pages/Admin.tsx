@@ -676,7 +676,7 @@ const Admin = () => {
 
       {/* Generated Link Dialog */}
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Share2 className="w-5 h-5 text-primary" /> Competition Link Generated!
@@ -690,26 +690,26 @@ const Admin = () => {
               <p className="font-bold text-lg">{generatedLink.title}</p>
               <p className="text-xs text-muted-foreground mt-1">Share this link with participants to join</p>
             </div>
-            <div className="p-3 rounded-xl bg-muted/50 border border-border flex items-center gap-2">
-              <code className="text-sm text-primary flex-1 truncate">{generatedLink.url}</code>
-              <Button size="sm" variant="outline" className="shrink-0" onClick={() => {
-                navigator.clipboard.writeText(generatedLink.url);
-                toast({ title: "Copied!" });
-              }}>
-                <Copy className="w-4 h-4 mr-1" /> Copy
-              </Button>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground">Competition Link</Label>
+              <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                <code className="text-sm text-primary break-all leading-relaxed block w-full select-all">
+                  {generatedLink.url}
+                </code>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="w-full" onClick={() => {
+            <Button 
+              className="w-full h-11" 
+              onClick={() => {
                 navigator.clipboard.writeText(generatedLink.url);
-                toast({ title: "Copied!" });
-              }}>
-                <Copy className="w-4 h-4 mr-1" /> Copy Link
-              </Button>
-              <Button variant="outline" className="w-full" onClick={() => window.open(generatedLink.url, "_blank")}>
-                <ExternalLink className="w-4 h-4 mr-1" /> Preview
-              </Button>
-            </div>
+                toast({ title: "Link copied to clipboard!" });
+              }}
+            >
+              <Copy className="w-4 h-4 mr-2" /> Copy Link
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => window.open(generatedLink.url, "_blank")}>
+              <ExternalLink className="w-4 h-4 mr-2" /> Open Preview
+            </Button>
             <p className="text-[11px] text-muted-foreground text-center">
               Participants must log in before they can join. Camera and fullscreen will be required.
             </p>
