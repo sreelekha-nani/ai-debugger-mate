@@ -690,15 +690,23 @@ const Admin = () => {
               <p className="font-bold text-lg">{generatedLink.title}</p>
               <p className="text-xs text-muted-foreground mt-1">Share this link with participants to join</p>
             </div>
-            <div className="p-3 rounded-xl bg-muted/50 border border-border flex items-center gap-2">
-              <code className="text-sm text-primary flex-1 truncate">{generatedLink.url}</code>
-              <Button size="sm" variant="outline" className="shrink-0" onClick={() => {
-                navigator.clipboard.writeText(generatedLink.url);
-                toast({ title: "Copied!" });
-              }}>
-                <Copy className="w-4 h-4 mr-1" /> Copy
-              </Button>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground">Competition Link</Label>
+              <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                <code className="text-sm text-primary break-all leading-relaxed block w-full select-all">
+                  {generatedLink.url}
+                </code>
+              </div>
             </div>
+            <Button 
+              className="w-full h-11" 
+              onClick={() => {
+                navigator.clipboard.writeText(generatedLink.url);
+                toast({ title: "Link copied to clipboard!" });
+              }}
+            >
+              <Copy className="w-4 h-4 mr-2" /> Copy Link
+            </Button>
             <div className="grid grid-cols-2 gap-2">
               <Button variant="outline" className="w-full" onClick={() => {
                 navigator.clipboard.writeText(generatedLink.url);
