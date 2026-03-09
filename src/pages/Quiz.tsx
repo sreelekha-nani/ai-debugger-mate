@@ -151,7 +151,10 @@ const Quiz = () => {
                 {stats.correct}/{stats.total} correct
               </Badge>
             </div>
-        </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/quiz/stats")}>
+              <BarChart3 className="w-4 h-4 mr-1" /> Stats
+            </Button>
+          </div>
       </nav>
 
       <div className="container mx-auto px-4 py-6 max-w-3xl space-y-5">
