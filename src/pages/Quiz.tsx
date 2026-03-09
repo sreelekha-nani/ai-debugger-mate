@@ -135,19 +135,19 @@ const Quiz = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <nav className="border-b border-border/50 bg-card/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-              <Brain className="w-5 h-5 text-accent" />
+          <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/dashboard")}>
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+                <Brain className="w-5 h-5 text-accent" />
+              </div>
+              <span className="font-bold text-lg">Quiz Mode</span>
+              <Badge variant="outline" className="text-xs">
+                {stats.correct}/{stats.total} correct
+              </Badge>
             </div>
-            <span className="font-bold text-lg">Quiz Mode</span>
-            <Badge variant="outline" className="text-xs">
-              {stats.correct}/{stats.total} correct
-            </Badge>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-            Back to Dashboard
-          </Button>
         </div>
       </nav>
 
