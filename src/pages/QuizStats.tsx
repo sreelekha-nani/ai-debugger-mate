@@ -131,6 +131,49 @@ const QuizStats = () => {
     return { current, longest };
   }, [submissions]);
 
+  const [trendRange, setTrendRange] = useState<"7d" | "30d" | "all">("30d");
+
+  const trendData = useMemo(() => {
+    if (!submissions.length) return [];
+    const now = new Date();
+    const filtered = trendRange === "all" ? submissions : submissions.filter((s) => {
+      const d = new Date(s.submitted_at);
+      const diff = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+      return trendRange === "7d" ? diff <= 7 : diff <= 30;
+    });
+
+    const dayMap: Record<string, { total: number; correct: number }> = {};
+    filtered.forEach((s) => {
+      const day = new Date(s.submitted_at).toISOString().slice(0, 10);
+      if (!dayMap[day]) dayMap[day] = { total: 0, correct: 0 };
+      dayMap[day].total++;
+      if (s.is_correct) dayMap[day].correct++;
+    });
+
+    // Fill gaps for continuous line
+    const sortedDays = Object.keys(dayMap).sort();
+    if (!sortedDays.length) return [];
+    const start = new Date(sortedDays[0]);
+    const end = new Date(sortedDays[sortedDays.length - 1]);
+    const result: { date: string; label: string; total: number; correct: number; accuracy: number; cumAccuracy: number }[] = [];
+    let cumTotal = 0, cumCorrect = 0;
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      const entry = dayMap[key] || { total: 0, correct: 0 };
+      cumTotal += entry.total;
+      cumCorrect += entry.correct;
+      result.push({
+        date: key,
+        label: `${d.getMonth() + 1}/${d.getDate()}`,
+        total: entry.total,
+        correct: entry.correct,
+        accuracy: entry.total ? Math.round((entry.correct / entry.total) * 100) : 0,
+        cumAccuracy: cumTotal ? Math.round((cumCorrect / cumTotal) * 100) : 0,
+      });
+    }
+    return result;
+  }, [submissions, trendRange]);
+
   const pieData = byLanguage.map((l) => ({ name: l.name, value: l.total }));
 
   return (
