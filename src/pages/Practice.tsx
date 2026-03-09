@@ -248,8 +248,11 @@ const Practice = () => {
       {/* Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/dashboard")}>
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div>
               <Bug className="w-5 h-5 text-primary" /> {challenge.title}
               <Badge variant="outline" className="text-xs">Practice</Badge>
             </h1>
