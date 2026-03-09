@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Crown, Shield, UserCog, RefreshCw, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Crown, Shield, UserCog, RefreshCw, Search, ChevronDown, ChevronUp, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
@@ -25,6 +26,8 @@ const OwnerPanel = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<"full_name" | "email" | "role">("full_name");
   const [sortAsc, setSortAsc] = useState(true);
+  const [grantEmail, setGrantEmail] = useState("");
+  const [grantLoading, setGrantLoading] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
