@@ -369,17 +369,21 @@ const Dashboard = () => {
                   <p className="text-2xl font-bold text-primary">{previousResults.length}</p>
                   <p className="text-xs text-muted-foreground">Competitions</p>
                 </div>
-                <div className="p-3 rounded-lg bg-accent/5 text-center">
+               <div className="p-3 rounded-lg bg-accent/5 text-center">
                   <p className="text-2xl font-bold text-accent">{practiceStats.count}</p>
                   <p className="text-xs text-muted-foreground">Practice Solved</p>
                 </div>
                 <div className="p-3 rounded-lg bg-success/5 text-center">
                   <p className="text-2xl font-bold text-success">{practiceStats.avgAccuracy || 0}%</p>
-                  <p className="text-xs text-muted-foreground">Avg Accuracy</p>
+                  <p className="text-xs text-muted-foreground">Practice Accuracy</p>
                 </div>
                 <div className="p-3 rounded-lg bg-warning/5 text-center">
-                  <p className="text-2xl font-bold text-warning">{practiceStats.totalScore}</p>
-                  <p className="text-xs text-muted-foreground">Total Score</p>
+                  <p className="text-2xl font-bold text-warning">{quizStats.total}</p>
+                  <p className="text-xs text-muted-foreground">Quiz Answered</p>
+                </div>
+                <div className="p-3 rounded-lg bg-accent/5 text-center">
+                  <p className="text-2xl font-bold text-accent">{quizStats.accuracy || 0}%</p>
+                  <p className="text-xs text-muted-foreground">Quiz Accuracy</p>
                 </div>
                 <div className="p-3 rounded-lg bg-destructive/5 text-center">
                   <p className="text-2xl font-bold text-destructive">🔥 {streakData.current}</p>
