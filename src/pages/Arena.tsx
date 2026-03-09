@@ -258,7 +258,7 @@ const Arena = () => {
                 <Bug className="w-5 h-5 text-primary" /> {challenge.title}
               </h1>
               <div className="flex gap-2 text-xs">
-                <Badge variant="outline" className="text-xs">🐍 Python</Badge>
+                <Badge variant="outline" className="text-xs">{LANGUAGES.find((l) => l.value === editorLanguage)?.label}</Badge>
                 <Badge variant="outline" className="text-xs capitalize">{competition?.difficulty}</Badge>
                 <Badge variant="outline" className="text-xs">{challenge.bugs.length} bugs</Badge>
               </div>
