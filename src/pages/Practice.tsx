@@ -371,13 +371,13 @@ const Practice = () => {
                     <div className="w-3 h-3 rounded-full bg-warning/70" />
                     <div className="w-3 h-3 rounded-full bg-success/70" />
                   </div>
-                  <span className="text-sm font-mono text-muted-foreground">practice.py</span>
+                  <span className="text-sm font-mono text-muted-foreground">practice.{LANGUAGES.find((l) => l.value === language)?.ext}</span>
                 </div>
-                <Badge variant="secondary" className="text-xs font-mono">Python</Badge>
+                <Badge variant="secondary" className="text-xs font-mono">{LANGUAGES.find((l) => l.value === language)?.label}</Badge>
               </div>
             </CardHeader>
             <CardContent className="p-0 h-[calc(100%-44px)]">
-              <MonacoEditor value={code} onChange={setCode} language="python" />
+              <MonacoEditor value={code} onChange={setCode} language={LANGUAGES.find((l) => l.value === language)?.monaco || "python"} />
             </CardContent>
           </Card>
         </div>
