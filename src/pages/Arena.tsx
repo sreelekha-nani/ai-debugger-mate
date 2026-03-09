@@ -40,6 +40,7 @@ const Arena = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showHints, setShowHints] = useState(false);
+  const [editorLanguage, setEditorLanguage] = useState("python");
   const [proctoringReady, setProctoringReady] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
