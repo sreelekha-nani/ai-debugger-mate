@@ -36,6 +36,7 @@ const App = () => (
             <Route path="/arena" element={<ProtectedRoute><Arena /></ProtectedRoute>} />
             <Route path="/practice" element={<ProtectedRoute><Practice /></ProtectedRoute>} />
             <Route path="/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
+            <Route path="/quiz/stats" element={<ProtectedRoute><QuizStats /></ProtectedRoute>} />
             <Route path="/practice-leaderboard" element={<ProtectedRoute><PracticeLeaderboard /></ProtectedRoute>} />
             <Route path="/global-leaderboard" element={<ProtectedRoute><GlobalLeaderboard /></ProtectedRoute>} />
             <Route path="/contest/:slug" element={<ProtectedRoute><JoinCompetition /></ProtectedRoute>} />
