@@ -247,7 +247,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Quick Actions */}
-        <div className={`grid grid-cols-1 gap-4 ${isAdmin ? "md:grid-cols-6" : "md:grid-cols-5"}`}>
+        <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 ${isAdmin ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}>
           {isAdmin && (
             <Card className="border-primary/30 hover:border-primary/50 transition-all cursor-pointer group bg-gradient-to-br from-card to-primary/5" onClick={() => navigate("/admin")}>
               <CardContent className="pt-6 pb-5 text-center">
