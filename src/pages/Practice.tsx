@@ -46,13 +46,28 @@ const Practice = () => {
   const [previousTitles, setPreviousTitles] = useState<string[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Load previous titles to avoid repeats
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("practice_submissions")
+      .select("challenge_title")
+      .eq("user_id", user.id)
+      .not("challenge_title", "is", null)
+      .order("submitted_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (data) setPreviousTitles(data.map((d: any) => d.challenge_title).filter(Boolean));
+      });
+  }, [user]);
+
   const generateChallenge = async () => {
     setLoading(true);
     setResult(null);
     setShowHints(false);
     try {
       const { data, error } = await supabase.functions.invoke("generate-buggy-code", {
-        body: { language: "python", difficulty },
+        body: { language, difficulty, previousTitles },
       });
       if (error) throw error;
       if (data.error) throw new Error(data.error);
