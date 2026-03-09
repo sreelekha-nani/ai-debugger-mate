@@ -66,6 +66,20 @@ const Dashboard = () => {
             longest: (profileData as any).longest_streak || 0,
           });
         }
+
+        // Fetch quiz stats
+        const { data: quizData } = await supabase
+          .from("quiz_submissions")
+          .select("is_correct")
+          .eq("user_id", user.id);
+        if (quizData && quizData.length > 0) {
+          const correct = quizData.filter((q: any) => q.is_correct).length;
+          setQuizStats({
+            total: quizData.length,
+            correct,
+            accuracy: Math.round((correct / quizData.length) * 100),
+          });
+        }
       }
     };
 
