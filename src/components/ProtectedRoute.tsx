@@ -23,8 +23,12 @@ const ProtectedRoute = ({ children, skipProfileCheck = false }: { children: Reac
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check if profile needs completion (skip for /complete-profile route itself)
-  if (!skipProfileCheck && profile && (!profile.username || profile.username.trim() === "")) {
+  // Only require post-signup completion for Google OAuth users with missing profile fields
+  const isGoogleUser = user.app_metadata?.provider === "google";
+  const missingUsername = !profile?.username || profile.username.trim() === "";
+  const missingCollege = !profile?.college_name || profile.college_name.trim() === "";
+
+  if (!skipProfileCheck && isGoogleUser && (missingUsername || missingCollege)) {
     return <Navigate to="/complete-profile" replace />;
   }
 

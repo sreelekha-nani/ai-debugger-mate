@@ -20,13 +20,13 @@ const CompleteProfile = () => {
 
   useEffect(() => {
     // If profile is already complete, redirect to dashboard
-    if (profile?.username && profile.username.trim() !== "") {
+    if (profile?.username?.trim() && profile?.college_name?.trim()) {
       navigate("/dashboard", { replace: true });
     }
   }, [profile, navigate]);
 
-  const checkUsername = async (username: string) => {
-    if (username.length < 3) {
+  const checkUsername = async (nextUsername: string) => {
+    if (nextUsername.length < 3) {
       setUsernameAvailable(null);
       return;
     }
@@ -34,8 +34,8 @@ const CompleteProfile = () => {
     const { data } = await supabase
       .from("profiles")
       .select("username")
-      .eq("username", username)
-      .single();
+      .eq("username", nextUsername)
+      .maybeSingle();
     setUsernameAvailable(!data);
     setCheckingUsername(false);
   };
@@ -62,6 +62,15 @@ const CompleteProfile = () => {
       return;
     }
 
+    if (!collegeName.trim()) {
+      toast({
+        title: "Missing College Name",
+        description: "Please enter your college or university name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (usernameAvailable === false) {
       toast({
         title: "Username Taken",
@@ -77,7 +86,7 @@ const CompleteProfile = () => {
       .from("profiles")
       .update({
         username: username.trim(),
-        college_name: collegeName.trim() || null,
+        college_name: collegeName.trim(),
       })
       .eq("id", profile?.id);
 
@@ -110,7 +119,7 @@ const CompleteProfile = () => {
           </div>
           <CardTitle className="text-2xl font-bold">Complete Your Profile</CardTitle>
           <CardDescription>
-            Just a few more details to get you started on Bug Busters!
+            Add your username and college name to finish your Google signup.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -131,7 +140,7 @@ const CompleteProfile = () => {
                     usernameAvailable === false
                       ? "border-destructive pr-10"
                       : usernameAvailable === true
-                      ? "border-green-500 pr-10"
+                      ? "border-primary pr-10"
                       : ""
                   }
                 />
@@ -141,7 +150,7 @@ const CompleteProfile = () => {
                   </div>
                 )}
                 {!checkingUsername && usernameAvailable === true && (
-                  <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />
+                  <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                 )}
                 {!checkingUsername && usernameAvailable === false && (
                   <X className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-destructive" />
@@ -153,12 +162,15 @@ const CompleteProfile = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="collegeName">College/University (Optional)</Label>
+              <Label htmlFor="collegeName">
+                College/University <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="collegeName"
                 placeholder="Your institution name"
                 value={collegeName}
                 onChange={(e) => setCollegeName(e.target.value)}
+                required
               />
             </div>
 
