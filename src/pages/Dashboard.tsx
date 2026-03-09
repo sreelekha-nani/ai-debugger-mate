@@ -71,7 +71,7 @@ const Dashboard = () => {
         // Fetch quiz stats
         const { data: quizData } = await supabase
           .from("quiz_submissions")
-          .select("is_correct")
+          .select("is_correct, language")
           .eq("user_id", user.id);
         if (quizData && quizData.length > 0) {
           const correct = quizData.filter((q: any) => q.is_correct).length;
@@ -80,6 +80,18 @@ const Dashboard = () => {
             correct,
             accuracy: Math.round((correct / quizData.length) * 100),
           });
+          // Per-language breakdown
+          const langMap: Record<string, { total: number; correct: number; accuracy: number }> = {};
+          for (const q of quizData as any[]) {
+            const lang = q.language || "Unknown";
+            if (!langMap[lang]) langMap[lang] = { total: 0, correct: 0, accuracy: 0 };
+            langMap[lang].total++;
+            if (q.is_correct) langMap[lang].correct++;
+          }
+          for (const lang of Object.keys(langMap)) {
+            langMap[lang].accuracy = Math.round((langMap[lang].correct / langMap[lang].total) * 100);
+          }
+          setQuizByLang(langMap);
         }
       }
     };
