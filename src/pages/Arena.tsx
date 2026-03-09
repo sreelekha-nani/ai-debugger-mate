@@ -23,6 +23,13 @@ interface Challenge {
   hints?: string[];
 }
 
+const LANGUAGES = [
+  { value: "python", label: "🐍 Python", monaco: "python", ext: "py" },
+  { value: "java", label: "☕ Java", monaco: "java", ext: "java" },
+  { value: "c", label: "⚙️ C", monaco: "c", ext: "c" },
+  { value: "cpp", label: "🔧 C++", monaco: "cpp", ext: "cpp" },
+];
+
 const Arena = () => {
   const navigate = useNavigate();
   const [competition, setCompetition] = useState<any>(null);
