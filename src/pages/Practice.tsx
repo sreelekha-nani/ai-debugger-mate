@@ -204,9 +204,9 @@ const Practice = () => {
                 <Select value={difficulty} onValueChange={setDifficulty}>
                   <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="easy">🟢 Easy (2 bugs)</SelectItem>
-                    <SelectItem value="medium">🟡 Medium (3 bugs)</SelectItem>
-                    <SelectItem value="hard">🔴 Hard (5 bugs)</SelectItem>
+                    <SelectItem value="easy">🟢 Easy — Syntax errors, missing brackets, indentation</SelectItem>
+                    <SelectItem value="medium">🟡 Moderate — Loop mistakes, condition errors, small algorithm issues</SelectItem>
+                    <SelectItem value="hard">🔴 Hard — Complex logic bugs, multiple bugs, algorithm debugging</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

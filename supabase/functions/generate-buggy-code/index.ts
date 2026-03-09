@@ -50,8 +50,33 @@ serve(async (req) => {
 
     const langKey = language.toLowerCase().replace("++", "pp");
     const langConfig = LANGUAGE_CONFIG[langKey] || LANGUAGE_CONFIG.python;
-    const bugCount = difficulty === "easy" ? 2 : difficulty === "medium" ? 3 : 5;
+    const bugCount = difficulty === "easy" ? { min: 1, max: 2 } : difficulty === "medium" ? { min: 2, max: 3 } : { min: 3, max: 5 };
+    const actualBugCount = bugCount.min + Math.floor(Math.random() * (bugCount.max - bugCount.min + 1));
     const complexity = langConfig.complexity[difficulty] || langConfig.complexity.medium;
+
+    const difficultyGuidelines = difficulty === "easy"
+      ? `EASY LEVEL GUIDELINES (Beginner-friendly):
+- Bugs should be SIMPLE and OBVIOUS: missing brackets, wrong indentation, typos in variable names, missing colons, wrong quotes
+- The program logic itself should be straightforward and correct — only introduce surface-level syntax mistakes
+- A beginner should be able to spot each bug within 1-2 minutes
+- Do NOT include tricky logic errors or algorithm bugs
+- Keep the program under 20 lines
+- Use simple concepts: print statements, basic if/else, simple for loops, basic arithmetic`
+      : difficulty === "medium"
+      ? `MODERATE LEVEL GUIDELINES (Intermediate):
+- Bugs should require SOME THINKING: off-by-one errors in loops, wrong comparison operators (< vs <=), incorrect loop bounds, swapped conditions in if/else
+- Include 1 syntax-level bug and the rest should be small logical mistakes
+- The program should use loops, conditionals, and basic data structures
+- Each bug should be solvable with careful reading — no deep algorithm knowledge needed
+- Keep the program 15-30 lines
+- Difficulty should feel like a typical coding interview warm-up question`
+      : `HARD LEVEL GUIDELINES (Advanced):
+- Bugs should be SUBTLE and require careful analysis: incorrect recursion base cases, wrong algorithm logic, edge case handling errors, incorrect data structure usage
+- Include a mix of logical and algorithmic bugs — at least 2 should require understanding the algorithm
+- The program should implement a recognizable algorithm or data structure operation
+- Keep the program 25-40 lines
+- Difficulty should feel like a medium-level coding interview question — challenging but NOT impossible
+- Do NOT make it frustratingly hard — the goal is to test skill, not trick people`;
 
     const avoidList = previousTitles.length > 0
       ? `\n\nIMPORTANT: Do NOT generate challenges similar to these previously solved ones:\n${previousTitles.map((t: string) => `- "${t}"`).join("\n")}\nCreate something completely different in topic, algorithm, and structure.`
@@ -59,12 +84,13 @@ serve(async (req) => {
 
     const systemPrompt = `You are a code challenge generator for a debugging competition. Generate buggy code that students must fix.
 
+${difficultyGuidelines}
+
 RULES:
 - Generate a small, self-contained ${langConfig.name} program
 - The program should be ${complexity}
-- Introduce exactly ${bugCount} bugs (mix of syntax errors, logical errors, off-by-one errors, wrong operators, missing statements)
+- Introduce exactly ${actualBugCount} bugs
 - Each bug should be fixable independently
-- The program should be 15-40 lines long
 - Include a clear description of what the program SHOULD do
 - Use proper ${langConfig.name} idioms and conventions
 ${langKey === "c" || langKey === "cpp" ? "- Include necessary #include headers\n- Include a main() function" : ""}
