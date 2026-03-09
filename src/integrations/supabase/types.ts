@@ -262,6 +262,36 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_submissions: {
+        Row: {
+          difficulty: string
+          id: string
+          is_correct: boolean
+          language: string
+          question_type: string
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          difficulty?: string
+          id?: string
+          is_correct?: boolean
+          language?: string
+          question_type?: string
+          submitted_at?: string
+          user_id: string
+        }
+        Update: {
+          difficulty?: string
+          id?: string
+          is_correct?: boolean
+          language?: string
+          question_type?: string
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
