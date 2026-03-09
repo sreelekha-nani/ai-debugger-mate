@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface QuizQuestion {
   title: string;
@@ -21,6 +22,7 @@ interface QuizQuestion {
 }
 
 const Quiz = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [question, setQuestion] = useState<QuizQuestion | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,6 +59,19 @@ const Quiz = () => {
       correct: prev.correct + (isCorrect ? 1 : 0),
       total: prev.total + 1,
     }));
+
+    // Save to database
+    if (user) {
+      supabase.from("quiz_submissions").insert({
+        user_id: user.id,
+        language: question.language,
+        question_type: question.type,
+        difficulty: question.difficulty,
+        is_correct: isCorrect,
+      }).then(({ error }) => {
+        if (error) console.error("Failed to save quiz result:", error);
+      });
+    }
   };
 
   const langColor = question?.language === "Python" ? "text-accent" : question?.language === "Java" ? "text-warning" : "text-primary";

@@ -17,6 +17,7 @@ const Dashboard = () => {
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [previousResults, setPreviousResults] = useState<any[]>([]);
   const [practiceStats, setPracticeStats] = useState({ count: 0, totalScore: 0, avgAccuracy: 0 });
+  const [quizStats, setQuizStats] = useState({ total: 0, correct: 0, accuracy: 0 });
   const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
 
   useEffect(() => {
@@ -63,6 +64,20 @@ const Dashboard = () => {
           setStreakData({
             current: (profileData as any).current_streak || 0,
             longest: (profileData as any).longest_streak || 0,
+          });
+        }
+
+        // Fetch quiz stats
+        const { data: quizData } = await supabase
+          .from("quiz_submissions")
+          .select("is_correct")
+          .eq("user_id", user.id);
+        if (quizData && quizData.length > 0) {
+          const correct = quizData.filter((q: any) => q.is_correct).length;
+          setQuizStats({
+            total: quizData.length,
+            correct,
+            accuracy: Math.round((correct / quizData.length) * 100),
           });
         }
       }
@@ -349,22 +364,26 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
                 <div className="p-3 rounded-lg bg-primary/5 text-center">
                   <p className="text-2xl font-bold text-primary">{previousResults.length}</p>
                   <p className="text-xs text-muted-foreground">Competitions</p>
                 </div>
-                <div className="p-3 rounded-lg bg-accent/5 text-center">
+               <div className="p-3 rounded-lg bg-accent/5 text-center">
                   <p className="text-2xl font-bold text-accent">{practiceStats.count}</p>
                   <p className="text-xs text-muted-foreground">Practice Solved</p>
                 </div>
                 <div className="p-3 rounded-lg bg-success/5 text-center">
                   <p className="text-2xl font-bold text-success">{practiceStats.avgAccuracy || 0}%</p>
-                  <p className="text-xs text-muted-foreground">Avg Accuracy</p>
+                  <p className="text-xs text-muted-foreground">Practice Accuracy</p>
                 </div>
                 <div className="p-3 rounded-lg bg-warning/5 text-center">
-                  <p className="text-2xl font-bold text-warning">{practiceStats.totalScore}</p>
-                  <p className="text-xs text-muted-foreground">Total Score</p>
+                  <p className="text-2xl font-bold text-warning">{quizStats.total}</p>
+                  <p className="text-xs text-muted-foreground">Quiz Answered</p>
+                </div>
+                <div className="p-3 rounded-lg bg-accent/5 text-center">
+                  <p className="text-2xl font-bold text-accent">{quizStats.accuracy || 0}%</p>
+                  <p className="text-xs text-muted-foreground">Quiz Accuracy</p>
                 </div>
                 <div className="p-3 rounded-lg bg-destructive/5 text-center">
                   <p className="text-2xl font-bold text-destructive">🔥 {streakData.current}</p>
