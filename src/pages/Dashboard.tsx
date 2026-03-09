@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
-import AdminRequestButton from "@/components/AdminRequestButton";
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -198,7 +198,6 @@ const Dashboard = () => {
                 Admin Panel
               </Button>
             )}
-            {!isAdmin && <AdminRequestButton />}
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-1" /> Sign Out
             </Button>
