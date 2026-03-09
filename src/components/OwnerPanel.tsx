@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Crown, Shield, UserCog, RefreshCw, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Crown, Shield, UserCog, RefreshCw, Search, ChevronDown, ChevronUp, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
@@ -25,6 +26,8 @@ const OwnerPanel = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<"full_name" | "email" | "role">("full_name");
   const [sortAsc, setSortAsc] = useState(true);
+  const [grantEmail, setGrantEmail] = useState("");
+  const [grantLoading, setGrantLoading] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -108,6 +111,75 @@ const OwnerPanel = () => {
         fetchData();
       }
     }
+  };
+
+  const grantAdminAccess = async () => {
+    const email = grantEmail.trim().toLowerCase();
+    
+    if (!email) {
+      toast({ title: "Email required", description: "Please enter an email address.", variant: "destructive" });
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
+
+    setGrantLoading(true);
+
+    // Look up user by email
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("email", email)
+      .single();
+
+    if (!profile) {
+      toast({ 
+        title: "User not found", 
+        description: "This email is not registered on the platform.", 
+        variant: "destructive" 
+      });
+      setGrantLoading(false);
+      return;
+    }
+
+    // Check if already has a role
+    const { data: existingRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", profile.id);
+
+    if (existingRole && existingRole.length > 0) {
+      const role = (existingRole[0] as any).role;
+      toast({ 
+        title: "Already has role", 
+        description: `${profile.full_name} already has the ${role} role.`, 
+        variant: "destructive" 
+      });
+      setGrantLoading(false);
+      return;
+    }
+
+    // Grant admin role
+    const { error } = await supabase
+      .from("user_roles")
+      .insert({ user_id: profile.id, role: "admin" });
+
+    if (error) {
+      toast({ title: "Failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ 
+        title: "Admin access granted!", 
+        description: `${profile.full_name} is now an admin. They will see the Admin Panel on their next login.` 
+      });
+      setGrantEmail("");
+      fetchData();
+    }
+    setGrantLoading(false);
   };
 
   // Filter and sort users
@@ -223,6 +295,44 @@ const OwnerPanel = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Grant Admin Access */}
+      <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <UserPlus className="w-4 h-4 text-primary" /> Grant Admin Access
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end gap-3">
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs font-medium">Enter Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder="user@email.com"
+                  value={grantEmail}
+                  onChange={(e) => setGrantEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && grantAdminAccess()}
+                  className="pl-9 h-10"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The user must already have a registered account on Bug Busters.
+              </p>
+            </div>
+            <Button 
+              onClick={grantAdminAccess} 
+              disabled={grantLoading || !grantEmail.trim()} 
+              className="h-10"
+            >
+              <UserPlus className="w-4 h-4 mr-1" /> 
+              {grantLoading ? "Granting..." : "Make Admin"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* User Management Table */}
       <Card className="border-border/50">
