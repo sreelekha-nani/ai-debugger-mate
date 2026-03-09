@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bug, Clock, Send, Eye, Lightbulb, Zap, RotateCcw, Trophy } from "lucide-react";
+import { Bug, Clock, Send, Eye, Lightbulb, Zap, RotateCcw, Trophy, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
