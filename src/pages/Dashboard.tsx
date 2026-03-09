@@ -175,7 +175,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       {/* Top nav */}
       <nav className="border-b border-border/50 bg-card/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
               <Bug className="w-5 h-5 text-primary" />
@@ -206,7 +206,7 @@ const Dashboard = () => {
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
+      <div className="max-w-[1600px] mx-auto px-6 py-8 space-y-6">
         {/* Welcome */}
         <Card className={`bg-gradient-to-br from-card ${isOwner ? "to-warning/5 border-warning/30" : "to-primary/5 border-primary/20"}`}>
           <CardContent className="pt-8 pb-6 px-8">
@@ -247,7 +247,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Quick Actions */}
-        <div className={`grid grid-cols-1 gap-4 ${isAdmin ? "md:grid-cols-6" : "md:grid-cols-5"}`}>
+        <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 ${isAdmin ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}>
           {isAdmin && (
             <Card className="border-primary/30 hover:border-primary/50 transition-all cursor-pointer group bg-gradient-to-br from-card to-primary/5" onClick={() => navigate("/admin")}>
               <CardContent className="pt-6 pb-5 text-center">
@@ -369,7 +369,7 @@ const Dashboard = () => {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           <Card className="border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
