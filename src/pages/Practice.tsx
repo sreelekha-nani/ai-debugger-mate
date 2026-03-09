@@ -131,7 +131,10 @@ const Practice = () => {
           total_bugs: data.totalBugs,
           accuracy: data.accuracy,
           time_spent: timeSpent,
+          language,
+          challenge_title: challenge.title,
         });
+        setPreviousTitles((prev) => [challenge.title, ...prev].slice(0, 20));
       }
 
       setResult({ ...data, score, timeSpent });
