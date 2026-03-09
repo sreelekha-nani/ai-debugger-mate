@@ -22,6 +22,7 @@ interface QuizQuestion {
 }
 
 const Quiz = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [question, setQuestion] = useState<QuizQuestion | null>(null);
   const [loading, setLoading] = useState(false);
