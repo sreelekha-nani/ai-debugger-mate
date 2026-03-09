@@ -2,8 +2,8 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Bug } from "lucide-react";
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+const ProtectedRoute = ({ children, skipProfileCheck = false }: { children: React.ReactNode; skipProfileCheck?: boolean }) => {
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -21,6 +21,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Check if profile needs completion (skip for /complete-profile route itself)
+  if (!skipProfileCheck && profile && (!profile.username || profile.username.trim() === "")) {
+    return <Navigate to="/complete-profile" replace />;
   }
 
   return <>{children}</>;
