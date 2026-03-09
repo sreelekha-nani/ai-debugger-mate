@@ -92,6 +92,9 @@ const Quiz = () => {
               </div>
               <span className="font-bold text-lg">Quiz Mode</span>
             </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/quiz/stats")}>
+              <BarChart3 className="w-4 h-4 mr-1" /> Stats
+            </Button>
           </div>
         </nav>
 
