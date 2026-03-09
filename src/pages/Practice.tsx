@@ -297,7 +297,7 @@ const Practice = () => {
                 <Badge variant="outline" className="text-xs">Practice</Badge>
               </h1>
               <div className="flex gap-2 text-xs">
-                <Badge variant="outline" className="text-xs">🐍 Python</Badge>
+                <Badge variant="outline" className="text-xs">{LANGUAGES.find((l) => l.value === language)?.label}</Badge>
                 <Badge variant="outline" className="text-xs capitalize">{difficulty}</Badge>
                 <Badge variant="outline" className="text-xs">{challenge.bugs.length} bugs</Badge>
               </div>
