@@ -48,6 +48,7 @@ const App = () => (
             <Route path="/global-leaderboard" element={<ProtectedRoute><GlobalLeaderboard /></ProtectedRoute>} />
             <Route path="/contest/:slug" element={<ProtectedRoute><JoinCompetition /></ProtectedRoute>} />
             <Route path="/competition/:slug" element={<ProtectedRoute><JoinCompetition /></ProtectedRoute>} />
+            <Route path="/competition/:slug/results" element={<ProtectedRoute><CompetitionResults /></ProtectedRoute>} />
             <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
