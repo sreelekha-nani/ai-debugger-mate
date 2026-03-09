@@ -188,6 +188,18 @@ const Practice = () => {
               </div>
 
               <div className="space-y-2">
+                <label className="text-sm font-medium">Programming Language</label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((l) => (
+                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Difficulty Level</label>
                 <Select value={difficulty} onValueChange={setDifficulty}>
                   <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
@@ -201,7 +213,7 @@ const Practice = () => {
 
               <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 text-sm text-muted-foreground space-y-1">
                 <p>⏱ 10 minute time limit</p>
-                <p>🐍 Python debugging challenge</p>
+                <p>{LANGUAGES.find((l) => l.value === language)?.label} debugging challenge</p>
                 <p>📊 Results visible on practice leaderboard</p>
               </div>
 
