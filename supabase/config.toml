@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.evaluate-submission]
 verify_jwt = false
+
+[functions.generate-quiz-question]
+verify_jwt = false

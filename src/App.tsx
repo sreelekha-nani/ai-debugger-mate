@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Arena from "./pages/Arena";
 import Practice from "./pages/Practice";
+import Quiz from "./pages/Quiz";
 import PracticeLeaderboard from "./pages/PracticeLeaderboard";
 import GlobalLeaderboard from "./pages/GlobalLeaderboard";
 import JoinCompetition from "./pages/JoinCompetition";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/arena" element={<ProtectedRoute><Arena /></ProtectedRoute>} />
             <Route path="/practice" element={<ProtectedRoute><Practice /></ProtectedRoute>} />
+            <Route path="/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
             <Route path="/practice-leaderboard" element={<ProtectedRoute><PracticeLeaderboard /></ProtectedRoute>} />
             <Route path="/global-leaderboard" element={<ProtectedRoute><GlobalLeaderboard /></ProtectedRoute>} />
             <Route path="/contest/:slug" element={<ProtectedRoute><JoinCompetition /></ProtectedRoute>} />
