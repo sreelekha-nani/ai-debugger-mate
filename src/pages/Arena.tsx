@@ -346,13 +346,22 @@ const Arena = () => {
                     <div className="w-3 h-3 rounded-full bg-warning/70" />
                     <div className="w-3 h-3 rounded-full bg-success/70" />
                   </div>
-                  <span className="text-sm font-mono text-muted-foreground">challenge.py</span>
+                  <span className="text-sm font-mono text-muted-foreground">challenge.{LANGUAGES.find((l) => l.value === editorLanguage)?.ext}</span>
                 </div>
-                <Badge variant="secondary" className="text-xs font-mono">Python</Badge>
+                <Select value={editorLanguage} onValueChange={setEditorLanguage}>
+                  <SelectTrigger className="w-[140px] h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((l) => (
+                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardHeader>
             <CardContent className="p-0 h-[calc(100%-44px)]">
-              <MonacoEditor value={code} onChange={setCode} language="python" />
+              <MonacoEditor value={code} onChange={setCode} language={LANGUAGES.find((l) => l.value === editorLanguage)?.monaco || "python"} />
             </CardContent>
           </Card>
         </div>
