@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Brain, ArrowLeft, BarChart3, Target, Flame, TrendingUp, Trophy } from "lucide-react";
+import { Brain, ArrowLeft, BarChart3, Target, Flame, TrendingUp, Trophy, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
