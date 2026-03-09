@@ -18,6 +18,7 @@ const Dashboard = () => {
   const [previousResults, setPreviousResults] = useState<any[]>([]);
   const [practiceStats, setPracticeStats] = useState({ count: 0, totalScore: 0, avgAccuracy: 0 });
   const [quizStats, setQuizStats] = useState({ total: 0, correct: 0, accuracy: 0 });
+  const [quizByLang, setQuizByLang] = useState<Record<string, { total: number; correct: number; accuracy: number }>>({});
   const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
 
   useEffect(() => {
@@ -70,7 +71,7 @@ const Dashboard = () => {
         // Fetch quiz stats
         const { data: quizData } = await supabase
           .from("quiz_submissions")
-          .select("is_correct")
+          .select("is_correct, language")
           .eq("user_id", user.id);
         if (quizData && quizData.length > 0) {
           const correct = quizData.filter((q: any) => q.is_correct).length;
@@ -79,6 +80,18 @@ const Dashboard = () => {
             correct,
             accuracy: Math.round((correct / quizData.length) * 100),
           });
+          // Per-language breakdown
+          const langMap: Record<string, { total: number; correct: number; accuracy: number }> = {};
+          for (const q of quizData as any[]) {
+            const lang = q.language || "Unknown";
+            if (!langMap[lang]) langMap[lang] = { total: 0, correct: 0, accuracy: 0 };
+            langMap[lang].total++;
+            if (q.is_correct) langMap[lang].correct++;
+          }
+          for (const lang of Object.keys(langMap)) {
+            langMap[lang].accuracy = Math.round((langMap[lang].correct / langMap[lang].total) * 100);
+          }
+          setQuizByLang(langMap);
         }
       }
     };
@@ -396,6 +409,42 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Quiz by Language */}
+          {Object.keys(quizByLang).length > 0 && (
+            <Card className="border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-accent" /> Quiz by Language
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {(["Python", "Java", "SQL"] as const).map((lang) => {
+                  const data = quizByLang[lang];
+                  if (!data) return null;
+                  const emoji = lang === "Python" ? "🐍" : lang === "Java" ? "☕" : "🗃️";
+                  const color = lang === "Python" ? "accent" : lang === "Java" ? "warning" : "primary";
+                  return (
+                    <div key={lang} className={`p-3 rounded-lg bg-${color}/5 border border-${color}/10`}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm font-semibold">{emoji} {lang}</span>
+                        <Badge variant="outline" className={`text-xs text-${color}`}>
+                          {data.correct}/{data.total} correct
+                        </Badge>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-secondary overflow-hidden">
+                        <div
+                          className={`h-full rounded-full bg-${color} transition-all`}
+                          style={{ width: `${data.accuracy}%` }}
+                        />
+                      </div>
+                      <p className={`text-xs text-${color} mt-1 text-right font-medium`}>{data.accuracy}%</p>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-border/50">
             <CardHeader className="pb-2">
