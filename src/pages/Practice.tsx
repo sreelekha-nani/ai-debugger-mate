@@ -143,7 +143,7 @@ const Practice = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [challenge, code, timeLeft, submitting, user, difficulty]);
+  }, [challenge, code, timeLeft, submitting, user, difficulty, language]);
 
   const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
   const timePercent = (timeLeft / PRACTICE_DURATION) * 100;
