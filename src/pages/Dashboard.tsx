@@ -364,7 +364,7 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
                 <div className="p-3 rounded-lg bg-primary/5 text-center">
                   <p className="text-2xl font-bold text-primary">{previousResults.length}</p>
                   <p className="text-xs text-muted-foreground">Competitions</p>
