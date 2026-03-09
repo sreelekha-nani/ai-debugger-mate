@@ -145,6 +145,29 @@ const Arena = () => {
 
   const handleSubmit = useCallback(async (auto = false) => {
     if (!challenge || submitting) return;
+    
+    // Check if user actually modified the code
+    const codeModified = code.trim() !== challenge.buggyCode.trim();
+    
+    // If auto-submit and code wasn't modified, just save without marking as submitted
+    if (auto && !codeModified) {
+      if (participantId) {
+        const timeSpent = competition ? competition.duration - timeLeft : 0;
+        await supabase.from("participants").update({
+          submitted: false,
+          code,
+          time_spent: timeSpent,
+          webcam_active: false,
+        }).eq("id", participantId);
+      }
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      proctoring.stopWebcam();
+      toast({ title: "⏰ Time's Up!", description: "Competition ended. You did not submit a solution." });
+      navigate("/dashboard");
+      return;
+    }
+    
     setSubmitting(true);
     if (timerRef.current) clearInterval(timerRef.current);
     if (auto) toast({ title: "⏰ Time's Up!", description: "Your code has been auto-submitted." });
