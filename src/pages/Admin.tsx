@@ -713,9 +713,6 @@ const Admin = () => {
             <p className="text-[11px] text-muted-foreground text-center">
               Participants must log in before they can join. Camera and fullscreen will be required.
             </p>
-            <p className="text-[11px] text-muted-foreground text-center">
-              Participants must log in before they can join. Camera and fullscreen will be required.
-            </p>
           </div>
           <DialogFooter>
             <Button onClick={() => setLinkDialogOpen(false)} className="w-full">Done</Button>
