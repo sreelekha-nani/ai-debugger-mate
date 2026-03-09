@@ -19,6 +19,7 @@ import QuizStats from "./pages/QuizStats";
 import PracticeLeaderboard from "./pages/PracticeLeaderboard";
 import GlobalLeaderboard from "./pages/GlobalLeaderboard";
 import JoinCompetition from "./pages/JoinCompetition";
+import CompetitionResults from "./pages/CompetitionResults";
 import Results from "./pages/Results";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
