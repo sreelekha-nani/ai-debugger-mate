@@ -189,7 +189,7 @@ const Dashboard = () => {
             <Button variant="outline" size="sm" onClick={() => navigate("/practice-leaderboard")}>
               <Trophy className="w-4 h-4 mr-1" /> Practice LB
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate("/global-leaderboard")}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/leaderboard")}>
               <Globe className="w-4 h-4 mr-1" /> Global LB
             </Button>
             {isAdmin && (
