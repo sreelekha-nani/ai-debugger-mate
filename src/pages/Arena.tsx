@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import MonacoEditor from "@/components/MonacoEditor";
 import WebcamMonitor from "@/components/WebcamMonitor";
 import ProctoringSetup from "@/components/ProctoringSetup";
+import ConsoleOutput from "@/components/ConsoleOutput";
 import { useProctoring } from "@/hooks/useProctoring";
 
 interface Challenge {
@@ -42,6 +43,8 @@ const Arena = () => {
   const [showHints, setShowHints] = useState(false);
   const [editorLanguage, setEditorLanguage] = useState("python");
   const [proctoringReady, setProctoringReady] = useState(false);
+  const [consoleOutput, setConsoleOutput] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleDisqualify = useCallback(async () => {
@@ -71,7 +74,6 @@ const Arena = () => {
     onWarning: handleWarningUpdate,
   });
 
-  // Load competition and challenge
   useEffect(() => {
     const pid = sessionStorage.getItem("participant_id");
     const cid = sessionStorage.getItem("competition_id");
@@ -96,7 +98,6 @@ const Arena = () => {
       setChallenge(ch);
       setCode(ch.buggyCode);
 
-      // Calculate time left based on actual_start
       const elapsed = Math.floor((Date.now() - new Date(comp.actual_start).getTime()) / 1000);
       const remaining = Math.max(0, comp.duration - elapsed);
       setTimeLeft(remaining);
@@ -106,7 +107,6 @@ const Arena = () => {
     loadCompetition();
   }, [navigate]);
 
-  // Listen for competition end
   useEffect(() => {
     if (!competition) return;
     const channel = supabase
@@ -120,7 +120,6 @@ const Arena = () => {
     return () => { supabase.removeChannel(channel); };
   }, [competition]);
 
-  // Timer
   useEffect(() => {
     if (loading || !proctoringReady || !challenge) return;
     timerRef.current = setInterval(() => {
@@ -136,20 +135,38 @@ const Arena = () => {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [loading, proctoringReady, challenge]);
 
-  // Update webcam status in DB
   useEffect(() => {
     if (participantId && proctoringReady) {
       supabase.from("participants").update({ webcam_active: proctoring.webcamActive }).eq("id", participantId);
     }
   }, [proctoring.webcamActive, participantId, proctoringReady]);
 
+  const handleRunCode = useCallback(async () => {
+    if (isRunning) return;
+    setIsRunning(true);
+    setConsoleOutput("Running...\n");
+    try {
+      const { data, error } = await supabase.functions.invoke("run-code", {
+        body: { code, language: editorLanguage },
+      });
+      if (error) throw error;
+      if (data.error && !data.output) {
+        setConsoleOutput(`Error: ${data.error}`);
+      } else {
+        setConsoleOutput(data.output || "(No output)");
+      }
+    } catch (e: any) {
+      setConsoleOutput(`Error: ${e.message}`);
+    } finally {
+      setIsRunning(false);
+    }
+  }, [code, editorLanguage, isRunning]);
+
   const handleSubmit = useCallback(async (auto = false) => {
     if (!challenge || submitting) return;
     
-    // Check if user actually modified the code
     const codeModified = code.trim() !== challenge.buggyCode.trim();
     
-    // If auto-submit and code wasn't modified, just save without marking as submitted
     if (auto && !codeModified) {
       if (participantId) {
         const timeSpent = competition ? competition.duration - timeLeft : 0;
@@ -189,7 +206,6 @@ const Arena = () => {
 
       const score = Math.max(0, Math.round(data.accuracy * 10 + data.bugsFixed * 20 - timeSpent * 0.1));
 
-      // Update participant in DB
       if (participantId) {
         await supabase.from("participants").update({
           submitted: true,
@@ -203,7 +219,6 @@ const Arena = () => {
         }).eq("id", participantId);
       }
 
-      // Exit fullscreen
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       proctoring.stopWebcam();
 
@@ -243,7 +258,6 @@ const Arena = () => {
     );
   }
 
-  // Proctoring setup screen
   if (!proctoringReady) {
     return (
       <ProctoringSetup
@@ -271,9 +285,9 @@ const Arena = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header Bar */}
-      <div className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50">
+      <div className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50 flex-shrink-0">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div>
@@ -288,10 +302,7 @@ const Arena = () => {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            {/* Webcam monitor */}
             <WebcamMonitor stream={proctoring.webcamStream} active={proctoring.webcamActive} />
-
-            {/* Warnings */}
             {proctoring.warningCount > 0 && (
               <Badge variant="destructive" className="text-xs">
                 <ShieldAlert className="w-3 h-3 mr-1" /> {proctoring.warningCount}/3
@@ -307,9 +318,9 @@ const Arena = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 container mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
+      <div className="flex-1 container mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0 overflow-hidden">
         {/* Left Panel */}
-        <div className="lg:col-span-1 space-y-4 overflow-y-auto">
+        <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto min-h-0">
           <Card className="border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
@@ -351,17 +362,17 @@ const Arena = () => {
           <Button
             onClick={() => handleSubmit(false)}
             disabled={submitting}
-            className="w-full h-12 text-base font-bold glow-primary"
+            className="w-full h-12 text-base font-bold glow-primary flex-shrink-0"
           >
             <Send className="w-4 h-4 mr-2" />
             {submitting ? "Evaluating..." : "Submit Solution"}
           </Button>
         </div>
 
-        {/* Code Editor */}
-        <div className="lg:col-span-2 min-h-[500px]">
-          <Card className="h-full border-primary/20 overflow-hidden">
-            <CardHeader className="py-2 px-4 border-b border-border bg-card">
+        {/* Code Editor + Console */}
+        <div className="lg:col-span-2 flex flex-col min-h-0 overflow-hidden">
+          <Card className="flex-1 border-primary/20 overflow-hidden flex flex-col min-h-0">
+            <CardHeader className="py-2 px-4 border-b border-border bg-card flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1.5">
@@ -383,10 +394,19 @@ const Arena = () => {
                 </Select>
               </div>
             </CardHeader>
-            <CardContent className="p-0 h-[calc(100%-44px)]">
+            <CardContent className="p-0 flex-1 min-h-0">
               <MonacoEditor value={code} onChange={setCode} language={LANGUAGES.find((l) => l.value === editorLanguage)?.monaco || "python"} />
             </CardContent>
           </Card>
+          {/* Console Output */}
+          <div className="h-[180px] flex-shrink-0 mt-2 rounded-lg overflow-hidden border border-border bg-terminal">
+            <ConsoleOutput
+              output={consoleOutput}
+              isRunning={isRunning}
+              onRun={handleRunCode}
+              onClear={() => setConsoleOutput("")}
+            />
+          </div>
         </div>
       </div>
     </div>

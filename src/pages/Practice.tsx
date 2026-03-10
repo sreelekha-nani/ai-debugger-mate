@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import MonacoEditor from "@/components/MonacoEditor";
+import ConsoleOutput from "@/components/ConsoleOutput";
 
 interface Challenge {
   title: string;
@@ -44,9 +45,10 @@ const Practice = () => {
   const [started, setStarted] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [previousTitles, setPreviousTitles] = useState<string[]>([]);
+  const [consoleOutput, setConsoleOutput] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load previous titles to avoid repeats
   useEffect(() => {
     if (!user) return;
     supabase
@@ -65,6 +67,7 @@ const Practice = () => {
     setLoading(true);
     setResult(null);
     setShowHints(false);
+    setConsoleOutput("");
     try {
       const { data, error } = await supabase.functions.invoke("generate-buggy-code", {
         body: { language, difficulty, previousTitles },
@@ -82,7 +85,6 @@ const Practice = () => {
     }
   };
 
-  // Timer
   useEffect(() => {
     if (!started || result) return;
     timerRef.current = setInterval(() => {
@@ -97,6 +99,27 @@ const Practice = () => {
     }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [started, result]);
+
+  const handleRunCode = useCallback(async () => {
+    if (isRunning) return;
+    setIsRunning(true);
+    setConsoleOutput("Running...\n");
+    try {
+      const { data, error } = await supabase.functions.invoke("run-code", {
+        body: { code, language },
+      });
+      if (error) throw error;
+      if (data.error && !data.output) {
+        setConsoleOutput(`Error: ${data.error}`);
+      } else {
+        setConsoleOutput(data.output || "(No output)");
+      }
+    } catch (e: any) {
+      setConsoleOutput(`Error: ${e.message}`);
+    } finally {
+      setIsRunning(false);
+    }
+  }, [code, language, isRunning]);
 
   const handleSubmit = useCallback(async (auto = false) => {
     if (!challenge || submitting) return;
@@ -121,7 +144,6 @@ const Practice = () => {
 
       const score = Math.max(0, Math.round(data.accuracy * 10 + data.bugsFixed * 20 - timeSpent * 0.1));
 
-      // Save to practice_submissions
       if (user) {
         await supabase.from("practice_submissions").insert({
           user_id: user.id,
@@ -154,6 +176,7 @@ const Practice = () => {
     setCode("");
     setStarted(false);
     setResult(null);
+    setConsoleOutput("");
     setTimeLeft(PRACTICE_DURATION);
     if (timerRef.current) clearInterval(timerRef.current);
   };
@@ -243,7 +266,7 @@ const Practice = () => {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-12 max-w-2xl">
           <div className="text-center mb-10">
-            <div className={`inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-card border-2 border-primary/30 mb-4`}>
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-card border-2 border-primary/30 mb-4">
               <span className={`text-4xl font-black ${gradeColor}`}>{grade}</span>
             </div>
             <h1 className="text-3xl font-bold mb-2">Practice Complete!</h1>
@@ -283,9 +306,9 @@ const Practice = () => {
   if (!challenge) return null;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50">
+      <div className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50 flex-shrink-0">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/dashboard")}>
@@ -311,8 +334,9 @@ const Practice = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 container mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
-        <div className="lg:col-span-1 space-y-4 overflow-y-auto">
+      <div className="flex-1 container mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0 overflow-hidden">
+        {/* Left Panel */}
+        <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto min-h-0">
           <Card className="border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
@@ -354,16 +378,17 @@ const Practice = () => {
           <Button
             onClick={() => handleSubmit(false)}
             disabled={submitting}
-            className="w-full h-12 text-base font-bold glow-primary"
+            className="w-full h-12 text-base font-bold glow-primary flex-shrink-0"
           >
             <Send className="w-4 h-4 mr-2" />
             {submitting ? "Evaluating..." : "Submit Solution"}
           </Button>
         </div>
 
-        <div className="lg:col-span-2 min-h-[500px]">
-          <Card className="h-full border-primary/20 overflow-hidden">
-            <CardHeader className="py-2 px-4 border-b border-border bg-card">
+        {/* Code Editor + Console */}
+        <div className="lg:col-span-2 flex flex-col min-h-0 overflow-hidden">
+          <Card className="flex-1 border-primary/20 overflow-hidden flex flex-col min-h-0">
+            <CardHeader className="py-2 px-4 border-b border-border bg-card flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1.5">
@@ -376,10 +401,19 @@ const Practice = () => {
                 <Badge variant="secondary" className="text-xs font-mono">{LANGUAGES.find((l) => l.value === language)?.label}</Badge>
               </div>
             </CardHeader>
-            <CardContent className="p-0 h-[calc(100%-44px)]">
+            <CardContent className="p-0 flex-1 min-h-0">
               <MonacoEditor value={code} onChange={setCode} language={LANGUAGES.find((l) => l.value === language)?.monaco || "python"} />
             </CardContent>
           </Card>
+          {/* Console Output */}
+          <div className="h-[180px] flex-shrink-0 mt-2 rounded-lg overflow-hidden border border-border bg-terminal">
+            <ConsoleOutput
+              output={consoleOutput}
+              isRunning={isRunning}
+              onRun={handleRunCode}
+              onClear={() => setConsoleOutput("")}
+            />
+          </div>
         </div>
       </div>
     </div>
