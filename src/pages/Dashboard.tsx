@@ -367,8 +367,9 @@ const Dashboard = () => {
           </Card>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {/* Stats + Finished by Me + Finished Competitions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Left: Your Stats */}
           <Card className="border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
@@ -376,12 +377,12 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-primary/5 text-center">
                   <p className="text-2xl font-bold text-primary">{previousResults.length}</p>
                   <p className="text-xs text-muted-foreground">Competitions</p>
                 </div>
-               <div className="p-3 rounded-lg bg-accent/5 text-center">
+                <div className="p-3 rounded-lg bg-accent/5 text-center">
                   <p className="text-2xl font-bold text-accent">{practiceStats.count}</p>
                   <p className="text-xs text-muted-foreground">Practice Solved</p>
                 </div>
@@ -401,50 +402,71 @@ const Dashboard = () => {
                   <p className="text-2xl font-bold text-destructive">🔥 {streakData.current}</p>
                   <p className="text-xs text-muted-foreground">Current Streak</p>
                 </div>
-                <div className="p-3 rounded-lg bg-secondary/50 text-center">
-                  <p className="text-2xl font-bold text-foreground">🏆 {streakData.longest}</p>
-                  <p className="text-xs text-muted-foreground">Longest Streak</p>
-                </div>
               </div>
+
+              {/* Quiz by Language inline */}
+              {Object.keys(quizByLang).length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                    <Brain className="w-3 h-3" /> Quiz by Language
+                  </p>
+                  {(["Python", "Java", "SQL"] as const).map((lang) => {
+                    const data = quizByLang[lang];
+                    if (!data) return null;
+                    const emoji = lang === "Python" ? "🐍" : lang === "Java" ? "☕" : "🗃️";
+                    return (
+                      <div key={lang} className="flex items-center justify-between text-xs">
+                        <span>{emoji} {lang}</span>
+                        <span className="text-muted-foreground">{data.correct}/{data.total} ({data.accuracy}%)</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Quiz by Language */}
-          {Object.keys(quizByLang).length > 0 && (
-            <Card className="border-border/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Brain className="w-4 h-4 text-accent" /> Quiz by Language
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {(["Python", "Java", "SQL"] as const).map((lang) => {
-                  const data = quizByLang[lang];
-                  if (!data) return null;
-                  const emoji = lang === "Python" ? "🐍" : lang === "Java" ? "☕" : "🗃️";
-                  const color = lang === "Python" ? "accent" : lang === "Java" ? "warning" : "primary";
-                  return (
-                    <div key={lang} className={`p-3 rounded-lg bg-${color}/5 border border-${color}/10`}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm font-semibold">{emoji} {lang}</span>
-                        <Badge variant="outline" className={`text-xs text-${color}`}>
-                          {data.correct}/{data.total} correct
-                        </Badge>
+          {/* Center: Finished by Me */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-warning" /> Finished by Me
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {previousResults.length > 0 ? (
+                <div className="space-y-2 max-h-[320px] overflow-y-auto">
+                  {previousResults.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/30 border border-border/30">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Bug className="w-3.5 h-3.5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm truncate">{(r.competitions as any)?.title || "Competition"}</p>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            {(r.competitions as any)?.difficulty} · {formatTime(r.time_spent || 0)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className={`h-full rounded-full bg-${color} transition-all`}
-                          style={{ width: `${data.accuracy}%` }}
-                        />
+                      <div className="text-right flex-shrink-0 ml-2">
+                        <p className="font-bold text-primary text-sm">{r.score} pts</p>
+                        <p className="text-xs text-muted-foreground">{r.bugs_fixed}/{r.total_bugs} bugs</p>
                       </div>
-                      <p className={`text-xs text-${color} mt-1 text-right font-medium`}>{data.accuracy}%</p>
                     </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Trophy className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No completed challenges yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Join a competition or practice to see your results</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
+          {/* Right: Finished Competitions */}
           <Card className="border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
@@ -453,19 +475,19 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               {finishedComps.length > 0 ? (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {finishedComps.slice(0, 5).map((comp) => (
+                <div className="space-y-2 max-h-[320px] overflow-y-auto">
+                  {finishedComps.slice(0, 8).map((comp) => (
                     <div key={comp.id} className="flex items-center justify-between p-2 rounded-lg bg-secondary/20 border border-border/20">
-                      <div>
-                        <p className="text-sm font-medium">{comp.title}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{comp.title}</p>
                         <p className="text-xs text-muted-foreground capitalize">{comp.difficulty} · {comp.duration / 60} min</p>
                       </div>
-                      <Badge variant="secondary" className="text-xs">Finished</Badge>
+                      <Badge variant="secondary" className="text-xs flex-shrink-0 ml-2">Finished</Badge>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-6">
+                <div className="text-center py-8">
                   <CheckCircle2 className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">No finished competitions</p>
                 </div>
@@ -473,43 +495,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Previous Results */}
-        {previousResults.length > 0 && (
-          <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Clock className="w-4 h-4 text-muted-foreground" /> Your Previous Results
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {previousResults.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border/30">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Bug className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm">{(r.competitions as any)?.title || "Competition"}</p>
-                        <p className="text-xs text-muted-foreground capitalize">
-                          {(r.competitions as any)?.difficulty} · {formatTime(r.time_spent || 0)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-primary">{r.score} pts</p>
-                      <div className="flex gap-2 text-xs text-muted-foreground">
-                        <span>{r.bugs_fixed}/{r.total_bugs} bugs</span>
-                        <span>{r.accuracy}%</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );
