@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bug, Trophy, Clock, Play, LogOut, User, Award, Timer, Zap, ChevronRight, Calendar, CheckCircle2, Code2, Shield, Flame, Crown, Globe, Plus, Brain } from "lucide-react";
+import { Bug, Trophy, Clock, Play, LogOut, User, Award, Timer, Zap, ChevronRight, Calendar, CheckCircle2, Code2, Shield, Flame, Crown, Globe, Plus, Brain, Search } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
