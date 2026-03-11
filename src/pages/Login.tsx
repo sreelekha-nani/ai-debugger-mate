@@ -59,6 +59,9 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       <div className="absolute inset-0 bg-grid-pattern opacity-20" />
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/8 rounded-full blur-[120px]" />
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/8 rounded-full blur-[120px]" />
