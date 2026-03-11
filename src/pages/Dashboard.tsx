@@ -23,6 +23,10 @@ const Dashboard = () => {
   const [quizStats, setQuizStats] = useState({ total: 0, correct: 0, accuracy: 0 });
   const [quizByLang, setQuizByLang] = useState<Record<string, { total: number; correct: number; accuracy: number }>>({});
   const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [foundComp, setFoundComp] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
