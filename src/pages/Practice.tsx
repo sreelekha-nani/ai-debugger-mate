@@ -107,7 +107,7 @@ const Practice = () => {
     setConsoleOutput("Running...\n");
     try {
       const { data, error } = await supabase.functions.invoke("run-code", {
-        body: { code, language },
+        body: { code, language, input: customInput },
       });
       if (error) throw error;
       if (data.error && !data.output) {
@@ -120,7 +120,7 @@ const Practice = () => {
     } finally {
       setIsRunning(false);
     }
-  }, [code, language, isRunning]);
+  }, [code, language, isRunning, customInput]);
 
   const handleSubmit = useCallback(async (auto = false) => {
     if (!challenge || submitting) return;
