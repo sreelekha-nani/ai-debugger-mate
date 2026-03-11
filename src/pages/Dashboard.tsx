@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bug, Trophy, Clock, Play, LogOut, User, Award, Timer, Zap, ChevronRight, Calendar, CheckCircle2, Code2, Shield, Flame, Crown, Globe, Plus, Brain } from "lucide-react";
+import { Bug, Trophy, Clock, Play, LogOut, User, Award, Timer, Zap, ChevronRight, Calendar, CheckCircle2, Code2, Shield, Flame, Crown, Globe, Plus, Brain, Search } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -21,6 +23,10 @@ const Dashboard = () => {
   const [quizStats, setQuizStats] = useState({ total: 0, correct: 0, accuracy: 0 });
   const [quizByLang, setQuizByLang] = useState<Record<string, { total: number; correct: number; accuracy: number }>>({});
   const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [foundComp, setFoundComp] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -149,6 +155,41 @@ const Dashboard = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
+  };
+
+  const handleSearchCompetition = async () => {
+    if (!joinCode.trim()) {
+      toast({ title: "Enter a code", description: "Please enter a competition code.", variant: "destructive" });
+      return;
+    }
+    setJoinLoading(true);
+    setFoundComp(null);
+    const { data } = await supabase
+      .from("competitions")
+      .select("*")
+      .eq("slug", joinCode.trim().toLowerCase())
+      .maybeSingle();
+    setJoinLoading(false);
+    if (!data) {
+      toast({ title: "Not found", description: "No competition found with this code.", variant: "destructive" });
+      return;
+    }
+    setFoundComp(data);
+  };
+
+  const handleJoinFoundCompetition = async () => {
+    if (!foundComp || !user) return;
+    if (foundComp.status === "ended") {
+      toast({ title: "Competition ended", description: "This competition has already ended.", variant: "destructive" });
+      return;
+    }
+    if (foundComp.status === "scheduled") {
+      navigate(`/competition/${foundComp.slug}`);
+      setJoinModalOpen(false);
+      return;
+    }
+    await handleJoinCompetition(foundComp);
+    setJoinModalOpen(false);
   };
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}m ${s % 60}s`;
@@ -286,11 +327,11 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground mt-1">Practice rankings</p>
             </CardContent>
           </Card>
-          <Card className="border-success/20 hover:border-success/40 transition-all cursor-pointer group">
+          <Card className="border-success/20 hover:border-success/40 transition-all cursor-pointer group" onClick={() => { setJoinModalOpen(true); setJoinCode(""); setFoundComp(null); }}>
             <CardContent className="pt-6 pb-5 text-center">
               <Zap className="w-8 h-8 text-success mx-auto mb-2 group-hover:scale-110 transition-transform" />
               <h3 className="font-bold">Join Competition</h3>
-              <p className="text-xs text-muted-foreground mt-1">Use a contest link</p>
+              <p className="text-xs text-muted-foreground mt-1">Enter a contest code</p>
             </CardContent>
           </Card>
         </div>
@@ -498,6 +539,62 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
+
+      {/* Join Competition Modal */}
+      <Dialog open={joinModalOpen} onOpenChange={setJoinModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-success" /> Join Competition
+            </DialogTitle>
+            <DialogDescription>Enter the competition code to join a contest.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter competition code..."
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value)}
+                className="h-11"
+                onKeyDown={(e) => e.key === "Enter" && handleSearchCompetition()}
+              />
+              <Button onClick={handleSearchCompetition} disabled={joinLoading} className="h-11 px-4">
+                {joinLoading ? (
+                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+
+            {foundComp && (
+              <Card className="border-success/30 bg-success/5">
+                <CardContent className="pt-4 pb-4 space-y-3">
+                  <div>
+                    <h3 className="font-bold text-lg">{foundComp.title}</h3>
+                    {foundComp.description && <p className="text-sm text-muted-foreground mt-1">{foundComp.description}</p>}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="text-xs capitalize">{foundComp.difficulty}</Badge>
+                    <Badge variant="outline" className="text-xs">⏱ {foundComp.duration / 60} min</Badge>
+                    <Badge variant={foundComp.status === "active" ? "default" : "secondary"} className="text-xs capitalize">
+                      {foundComp.status === "active" ? "🟢 Live" : foundComp.status}
+                    </Badge>
+                  </div>
+                  {foundComp.scheduled_start && (
+                    <p className="text-xs text-muted-foreground">📅 {new Date(foundComp.scheduled_start).toLocaleString()}</p>
+                  )}
+                  <Button onClick={handleJoinFoundCompetition} className="w-full h-11 font-bold glow-primary" disabled={foundComp.status === "ended"}>
+                    {foundComp.status === "ended" ? "Competition Ended" : (
+                      <><ChevronRight className="w-4 h-4 mr-2" /> {foundComp.status === "active" ? "Join Now" : "View Competition"}</>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
