@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bug, Trophy, Clock, Play, LogOut, User, Award, Timer, Zap, ChevronRight, Calendar, CheckCircle2, Code2, Shield, Flame, Crown, Globe, Plus, Brain } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -198,6 +199,7 @@ const Dashboard = () => {
                 Admin Panel
               </Button>
             )}
+            <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-1" /> Sign Out
             </Button>

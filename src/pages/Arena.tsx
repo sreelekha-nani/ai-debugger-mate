@@ -142,25 +142,30 @@ const Arena = () => {
   }, [proctoring.webcamActive, participantId, proctoringReady]);
 
   const handleRunCode = useCallback(async () => {
-    if (isRunning) return;
+    if (isRunning || !challenge) return;
     setIsRunning(true);
-    setConsoleOutput("Running...\n");
+    setConsoleOutput("Running with test cases...\n");
     try {
+      // In competition mode, use predefined test case input
+      const testInput = challenge.testCases?.[0]?.input || "";
       const { data, error } = await supabase.functions.invoke("run-code", {
-        body: { code, language: editorLanguage },
+        body: { code, language: editorLanguage, input: testInput },
       });
       if (error) throw error;
-      if (data.error && !data.output) {
-        setConsoleOutput(`Error: ${data.error}`);
-      } else {
-        setConsoleOutput(data.output || "(No output)");
+      const expectedOutput = challenge.testCases?.[0]?.expectedOutput || "";
+      const actualOutput = data.output || "(No output)";
+      let result = `Input: ${testInput}\n\nYour Output:\n${actualOutput}`;
+      if (expectedOutput) {
+        const passed = actualOutput.trim() === expectedOutput.trim();
+        result += `\n\nExpected Output:\n${expectedOutput}\n\n${passed ? "✅ Test Passed!" : "❌ Test Failed"}`;
       }
+      setConsoleOutput(data.error && !data.output ? `Error: ${data.error}` : result);
     } catch (e: any) {
       setConsoleOutput(`Error: ${e.message}`);
     } finally {
       setIsRunning(false);
     }
-  }, [code, editorLanguage, isRunning]);
+  }, [code, editorLanguage, isRunning, challenge]);
 
   const handleSubmit = useCallback(async (auto = false) => {
     if (!challenge || submitting) return;

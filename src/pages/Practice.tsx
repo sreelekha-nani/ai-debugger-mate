@@ -47,6 +47,7 @@ const Practice = () => {
   const [previousTitles, setPreviousTitles] = useState<string[]>([]);
   const [consoleOutput, setConsoleOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
+  const [customInput, setCustomInput] = useState("");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -106,7 +107,7 @@ const Practice = () => {
     setConsoleOutput("Running...\n");
     try {
       const { data, error } = await supabase.functions.invoke("run-code", {
-        body: { code, language },
+        body: { code, language, input: customInput },
       });
       if (error) throw error;
       if (data.error && !data.output) {
@@ -119,7 +120,7 @@ const Practice = () => {
     } finally {
       setIsRunning(false);
     }
-  }, [code, language, isRunning]);
+  }, [code, language, isRunning, customInput]);
 
   const handleSubmit = useCallback(async (auto = false) => {
     if (!challenge || submitting) return;
@@ -406,12 +407,15 @@ const Practice = () => {
             </CardContent>
           </Card>
           {/* Console Output */}
-          <div className="h-[180px] flex-shrink-0 mt-2 rounded-lg overflow-hidden border border-border bg-terminal">
+          <div className="h-[220px] flex-shrink-0 mt-2 rounded-lg overflow-hidden border border-border bg-terminal">
             <ConsoleOutput
               output={consoleOutput}
               isRunning={isRunning}
               onRun={handleRunCode}
               onClear={() => setConsoleOutput("")}
+              showCustomInput={true}
+              customInput={customInput}
+              onCustomInputChange={setCustomInput}
             />
           </div>
         </div>

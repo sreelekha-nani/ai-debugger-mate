@@ -103,10 +103,6 @@
     @apply bg-background text-foreground font-sans;
   }
 
-  /* Force dark mode by default */
-  html {
-    @apply dark;
-  }
 }
 
 @layer utilities {
