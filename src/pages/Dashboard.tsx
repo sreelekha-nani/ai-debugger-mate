@@ -157,6 +157,41 @@ const Dashboard = () => {
     navigate("/login");
   };
 
+  const handleSearchCompetition = async () => {
+    if (!joinCode.trim()) {
+      toast({ title: "Enter a code", description: "Please enter a competition code.", variant: "destructive" });
+      return;
+    }
+    setJoinLoading(true);
+    setFoundComp(null);
+    const { data } = await supabase
+      .from("competitions")
+      .select("*")
+      .eq("slug", joinCode.trim().toLowerCase())
+      .maybeSingle();
+    setJoinLoading(false);
+    if (!data) {
+      toast({ title: "Not found", description: "No competition found with this code.", variant: "destructive" });
+      return;
+    }
+    setFoundComp(data);
+  };
+
+  const handleJoinFoundCompetition = async () => {
+    if (!foundComp || !user) return;
+    if (foundComp.status === "ended") {
+      toast({ title: "Competition ended", description: "This competition has already ended.", variant: "destructive" });
+      return;
+    }
+    if (foundComp.status === "scheduled") {
+      navigate(`/competition/${foundComp.slug}`);
+      setJoinModalOpen(false);
+      return;
+    }
+    await handleJoinCompetition(foundComp);
+    setJoinModalOpen(false);
+  };
+
   const formatTime = (s: number) => `${Math.floor(s / 60)}m ${s % 60}s`;
 
   const CompetitionCountdown = ({ comp }: { comp: any }) => {
