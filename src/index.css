@@ -103,8 +103,8 @@
     @apply bg-background text-foreground font-sans;
   }
 
-  /* Force dark mode by default */
-  html {
+  /* Default to dark mode if no preference stored */
+  html:not(.light-mode-set) {
     @apply dark;
   }
 }
