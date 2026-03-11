@@ -47,6 +47,7 @@ const Practice = () => {
   const [previousTitles, setPreviousTitles] = useState<string[]>([]);
   const [consoleOutput, setConsoleOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
+  const [customInput, setCustomInput] = useState("");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
