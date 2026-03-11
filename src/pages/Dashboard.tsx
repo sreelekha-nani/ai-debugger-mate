@@ -539,6 +539,62 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
+
+      {/* Join Competition Modal */}
+      <Dialog open={joinModalOpen} onOpenChange={setJoinModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-success" /> Join Competition
+            </DialogTitle>
+            <DialogDescription>Enter the competition code to join a contest.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter competition code..."
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value)}
+                className="h-11"
+                onKeyDown={(e) => e.key === "Enter" && handleSearchCompetition()}
+              />
+              <Button onClick={handleSearchCompetition} disabled={joinLoading} className="h-11 px-4">
+                {joinLoading ? (
+                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+
+            {foundComp && (
+              <Card className="border-success/30 bg-success/5">
+                <CardContent className="pt-4 pb-4 space-y-3">
+                  <div>
+                    <h3 className="font-bold text-lg">{foundComp.title}</h3>
+                    {foundComp.description && <p className="text-sm text-muted-foreground mt-1">{foundComp.description}</p>}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="text-xs capitalize">{foundComp.difficulty}</Badge>
+                    <Badge variant="outline" className="text-xs">⏱ {foundComp.duration / 60} min</Badge>
+                    <Badge variant={foundComp.status === "active" ? "default" : "secondary"} className="text-xs capitalize">
+                      {foundComp.status === "active" ? "🟢 Live" : foundComp.status}
+                    </Badge>
+                  </div>
+                  {foundComp.scheduled_start && (
+                    <p className="text-xs text-muted-foreground">📅 {new Date(foundComp.scheduled_start).toLocaleString()}</p>
+                  )}
+                  <Button onClick={handleJoinFoundCompetition} className="w-full h-11 font-bold glow-primary" disabled={foundComp.status === "ended"}>
+                    {foundComp.status === "ended" ? "Competition Ended" : (
+                      <><ChevronRight className="w-4 h-4 mr-2" /> {foundComp.status === "active" ? "Join Now" : "View Competition"}</>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
