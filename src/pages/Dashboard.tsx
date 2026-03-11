@@ -327,11 +327,11 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground mt-1">Practice rankings</p>
             </CardContent>
           </Card>
-          <Card className="border-success/20 hover:border-success/40 transition-all cursor-pointer group">
+          <Card className="border-success/20 hover:border-success/40 transition-all cursor-pointer group" onClick={() => { setJoinModalOpen(true); setJoinCode(""); setFoundComp(null); }}>
             <CardContent className="pt-6 pb-5 text-center">
               <Zap className="w-8 h-8 text-success mx-auto mb-2 group-hover:scale-110 transition-transform" />
               <h3 className="font-bold">Join Competition</h3>
-              <p className="text-xs text-muted-foreground mt-1">Use a contest link</p>
+              <p className="text-xs text-muted-foreground mt-1">Enter a contest code</p>
             </CardContent>
           </Card>
         </div>
