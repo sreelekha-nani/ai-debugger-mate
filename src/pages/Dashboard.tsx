@@ -199,6 +199,7 @@ const Dashboard = () => {
                 Admin Panel
               </Button>
             )}
+            <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-1" /> Sign Out
             </Button>

@@ -407,12 +407,15 @@ const Practice = () => {
             </CardContent>
           </Card>
           {/* Console Output */}
-          <div className="h-[180px] flex-shrink-0 mt-2 rounded-lg overflow-hidden border border-border bg-terminal">
+          <div className="h-[220px] flex-shrink-0 mt-2 rounded-lg overflow-hidden border border-border bg-terminal">
             <ConsoleOutput
               output={consoleOutput}
               isRunning={isRunning}
               onRun={handleRunCode}
               onClear={() => setConsoleOutput("")}
+              showCustomInput={true}
+              customInput={customInput}
+              onCustomInputChange={setCustomInput}
             />
           </div>
         </div>
