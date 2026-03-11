@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable/index";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Login = () => {
   const navigate = useNavigate();
